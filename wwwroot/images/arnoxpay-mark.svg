@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="ArnoxPay">
+  <defs>
+    <linearGradient id="m" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="8" fill="url(#m)"/>
+  <path d="M16 6 L9 9.2 V16 C9 20.8 12.2 24.6 16 26 C19.8 24.6 23 20.8 23 16 V9.2 Z" fill="#fff"/>
+  <path d="M12.2 15.8 L14.6 18.2 L20 12.2" fill="none" stroke="#4f46e5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

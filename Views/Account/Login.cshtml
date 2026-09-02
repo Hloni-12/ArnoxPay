@@ -1,0 +1,62 @@
+@model LoginModel
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_Layout";
+}
+
+<div class="login-page">
+    <div class="login-card">
+        <div class="login-brand text-center mb-4">
+            <svg class="brand-icon mx-auto" width="48" height="48" viewBox="0 0 64 64" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="loginLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#4f46e5"/>
+                        <stop offset="100%" stop-color="#7c3aed"/>
+                    </linearGradient>
+                </defs>
+                <rect width="64" height="64" rx="16" fill="url(#loginLogoGrad)"/>
+                <path d="M32 12 L18 18 V32.5 C18 42 24.5 49.5 32 52.5 C39.5 49.5 46 42 46 32.5 V18 Z" fill="#fff" opacity="0.95"/>
+                <path d="M24.5 32.5 L29.5 37.5 L40 25" fill="none" stroke="#4f46e5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="brand-name mt-2" style="font-size:1.35rem">Arnox<span class="brand-pay">Pay</span></div>
+            <p class="login-slogan mb-0">Secure Payments. Smarter Services.</p>
+        </div>
+
+        <h1 class="h3 fw-bold text-center mb-1">Welcome back</h1>
+        <p class="text-muted text-center mb-4">
+            Sign in to manage your university payments and services.
+        </p>
+
+        <form method="post" asp-action="Login" novalidate>
+            <input asp-for="ReturnUrl" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="mb-3">
+                <label asp-for="LoginId" class="form-label">Email Address</label>
+                <input asp-for="LoginId" class="form-control form-control-lg" autocomplete="username"
+                       placeholder="name@example.com or student/staff number" />
+                <span asp-validation-for="LoginId" class="text-danger small"></span>
+                <div class="form-text">Customers may also sign in with their Student or Staff number.</div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label">Password</label>
+                <input asp-for="Password" class="form-control form-control-lg" autocomplete="current-password" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 mb-3">Sign In</button>
+
+            <p class="text-center small mb-0">
+                <a asp-controller="Account" asp-action="Login" class="text-muted">Forgot Password?</a>
+            </p>
+            <p class="text-center small mt-3 mb-0">
+                New to ArnoxPay? <a asp-action="Register">Create an account</a>
+            </p>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

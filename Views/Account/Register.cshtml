@@ -1,0 +1,104 @@
+@model RegisterModel
+@{
+    ViewData["Title"] = "Create customer account";
+}
+<div class="auth-card mx-auto" style="max-width:560px">
+    <h1 class="page-title h3 mb-1">Create customer account</h1>
+    <p class="text-muted mb-4">
+        Register as a Student or Staff member to pay and manage university estate services online.
+    </p>
+
+    <form asp-controller="Account" asp-action="Register" method="post" id="registerForm" novalidate>
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        @* ---- Account type only ---- *@
+        <div class="mb-4">
+            <p class="form-label fw-semibold mb-2">Select Account Type</p>
+            <span asp-validation-for="Category" class="text-danger small d-block mb-2"></span>
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="account-type-card">
+                        <input type="radio" asp-for="Category" value="Student" class="account-type-input" id="typeStudent" />
+                        <span class="account-type-icon" aria-hidden="true"><i class="fa-solid fa-graduation-cap"></i></span>
+                        <span class="account-type-title">Student</span>
+                        <span class="account-type-desc">Register as a Student</span>
+                    </label>
+                </div>
+                <div class="col-6">
+                    <label class="account-type-card">
+                        <input type="radio" asp-for="Category" value="Staff" class="account-type-input" id="typeStaff" />
+                        <span class="account-type-icon" aria-hidden="true"><i class="fa-solid fa-briefcase"></i></span>
+                        <span class="account-type-title">Staff</span>
+                        <span class="account-type-desc">Register as Staff</span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        @* ---- Student Number OR Staff Number (never both; never "User Number") ---- *@
+        <div class="mb-3">
+            <label class="form-label" for="UserNumber" id="numberLabel">Student Number</label>
+            <input asp-for="UserNumber" class="form-control" id="UserNumber" autocomplete="username" />
+            <span asp-validation-for="UserNumber" class="text-danger small"></span>
+        </div>
+
+        @* ---- Name + Surname only (no Full Name) ---- *@
+        <div class="mb-3">
+            <label asp-for="Name" class="form-label"></label>
+            <input asp-for="Name" class="form-control" autocomplete="given-name" />
+            <span asp-validation-for="Name" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Surname" class="form-label"></label>
+            <input asp-for="Surname" class="form-control" autocomplete="family-name" />
+            <span asp-validation-for="Surname" class="text-danger small"></span>
+        </div>
+
+        @* ---- Email (any valid email) ---- *@
+        <div class="mb-3">
+            <label asp-for="Email" class="form-label"></label>
+            <input asp-for="Email" class="form-control" autocomplete="email" />
+            <span asp-validation-for="Email" class="text-danger small"></span>
+        </div>
+
+        @* ---- Password ---- *@
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <input asp-for="Password" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Password" class="text-danger small"></span>
+        </div>
+        <div class="mb-4">
+            <label asp-for="ConfirmPassword" class="form-label"></label>
+            <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-100">Create Account</button>
+        <p class="text-center text-muted small mt-3 mb-0">
+            Already registered? <a asp-action="Login">Sign in</a>
+        </p>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+  function sync() {
+    var staff = document.getElementById('typeStaff');
+    var label = document.getElementById('numberLabel');
+    if (label) {
+      label.textContent = (staff && staff.checked) ? 'Staff Number' : 'Student Number';
+    }
+    document.querySelectorAll('.account-type-card').forEach(function (card) {
+      var input = card.querySelector('.account-type-input');
+      card.classList.toggle('selected', !!(input && input.checked));
+    });
+  }
+  document.querySelectorAll('.account-type-input').forEach(function (el) {
+    el.addEventListener('change', sync);
+  });
+  sync();
+})();
+</script>
+}

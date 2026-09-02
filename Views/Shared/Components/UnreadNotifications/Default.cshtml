@@ -1,0 +1,12 @@
+@model int
+@{
+    var count = Model;
+}
+<a class="nav-icon-btn position-relative" asp-controller="Notification" asp-action="Index" title="Notifications">
+    <i class="fa-regular fa-bell" aria-hidden="true"></i>
+    <span class="visually-hidden">Notifications@(count > 0 ? $", {count} unread" : "")</span>
+    @if (count > 0)
+    {
+        <span class="notif-badge" aria-hidden="true">@(count > 99 ? "99+" : count.ToString())</span>
+    }
+</a>

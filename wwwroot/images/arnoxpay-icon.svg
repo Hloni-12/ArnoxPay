@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ArnoxPay">
+  <defs>
+    <linearGradient id="apFill" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded tile -->
+  <rect width="64" height="64" rx="16" fill="url(#apFill)"/>
+  <!-- Shield -->
+  <path d="M32 12 L18 18 V32.5 C18 42 24.5 49.5 32 52.5 C39.5 49.5 46 42 46 32.5 V18 Z"
+        fill="#ffffff" opacity="0.95"/>
+  <!-- Check (secure payment) -->
+  <path d="M24.5 32.5 L29.5 37.5 L40 25"
+        fill="none" stroke="#4f46e5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

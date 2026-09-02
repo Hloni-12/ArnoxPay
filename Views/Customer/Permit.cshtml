@@ -1,0 +1,82 @@
+@model List<ParkingPermit>
+@{
+    ViewData["Title"] = "Parking Permits";
+    var fullName = ViewData["FullName"] as string ?? "Customer";
+    var active = Model?.FirstOrDefault(x => x.Status == ParkingPermitStatus.Active);
+}
+
+<div class="section-header">
+    <div>
+        <p class="eyebrow">Digital Permit</p>
+        <h1 class="page-title h2 mb-0">ArnoxPay Parking Permits</h1>
+        <p class="text-muted mb-0">Apply for a permit after registering a vehicle. Status is stored in SQL Server.</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a class="btn btn-primary" asp-action="ApplyPermit">Apply for permit</a>
+        <a class="btn btn-outline-secondary" asp-controller="Vehicle" asp-action="Index">Vehicles</a>
+    </div>
+</div>
+
+@if (active != null)
+{
+    <div class="row g-4 mb-4 justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="permit-card mx-auto">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="permit-brand">ArnoxPay · Parking Permit</div>
+                    <div class="permit-status"><span class="dot"></span> @active.Status</div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-7">
+                        <div class="permit-label">Customer</div>
+                        <div class="permit-value">@fullName</div>
+                        <div class="permit-label">Vehicle</div>
+                        <div class="permit-value">@(active.Vehicle?.RegistrationNumber ?? "—")</div>
+                        <div class="permit-label">Permit number</div>
+                        <div class="permit-value">@active.PermitNumber</div>
+                        <div class="permit-label">Type</div>
+                        <div class="permit-value">@active.PermitType</div>
+                    </div>
+                    <div class="col-5 d-flex flex-column align-items-end">
+                        <div class="qr-box" title="Present at gate">
+                            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#fff"/><rect x="8" y="8" width="28" height="28" fill="#111"/><rect x="12" y="12" width="20" height="20" fill="#fff"/><rect x="16" y="16" width="12" height="12" fill="#111"/><rect x="64" y="8" width="28" height="28" fill="#111"/><rect x="68" y="12" width="20" height="20" fill="#fff"/><rect x="72" y="16" width="12" height="12" fill="#111"/><rect x="8" y="64" width="28" height="28" fill="#111"/><rect x="12" y="68" width="20" height="20" fill="#fff"/><rect x="16" y="72" width="12" height="12" fill="#111"/></svg>
+                        </div>
+                        <div class="text-end mt-2" style="font-size:0.7rem;opacity:0.75;">Scan at boom gate</div>
+                    </div>
+                </div>
+                <div class="row mt-2 pt-2" style="border-top:1px solid rgba(255,255,255,0.2);">
+                    <div class="col-6"><div class="permit-label">Issued</div><div class="permit-value" style="font-size:0.95rem;">@active.IssueDate.ToString("dd MMM yyyy")</div></div>
+                    <div class="col-6 text-end"><div class="permit-label">Expires</div><div class="permit-value" style="font-size:0.95rem;">@active.ExpiryDate.ToString("dd MMM yyyy")</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<section class="content-card">
+    <h2 class="h5 fw-bold mb-3">All applications</h2>
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead><tr><th>Permit #</th><th>Vehicle</th><th>Type</th><th>Expires</th><th>Status</th></tr></thead>
+                <tbody>
+                @foreach (var p in Model)
+                {
+                    <tr>
+                        <td class="fw-semibold">@p.PermitNumber</td>
+                        <td>@(p.Vehicle?.RegistrationNumber ?? "—")</td>
+                        <td>@p.PermitType</td>
+                        <td>@p.ExpiryDate.ToString("dd MMM yyyy")</td>
+                        <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No permit applications yet. Register a vehicle, then apply.</div>
+    }
+</section>

@@ -1,0 +1,13 @@
+@model object
+@{
+    var text = Model?.ToString() ?? "";
+    var key = text.ToLowerInvariant();
+    var cls = "status-pill status-neutral";
+    if (key.Contains("accept") || key.Contains("approve") || key.Contains("success") || key.Contains("active") || key.Contains("resolved") || key.Contains("completed") || key.Contains("paid"))
+        cls = "status-pill status-success";
+    else if (key.Contains("pending") || key.Contains("review") || key.Contains("progress") || key.Contains("open") || key.Contains("processing") || key.Contains("awaiting") || key.Contains("authentication"))
+        cls = "status-pill status-pending";
+    else if (key.Contains("reject") || key.Contains("declin") || key.Contains("fail") || key.Contains("cancel") || key.Contains("expired") || key.Contains("denied"))
+        cls = "status-pill status-failed";
+}
+<span class="@cls">@text</span>

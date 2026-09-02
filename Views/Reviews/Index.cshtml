@@ -1,0 +1,90 @@
+@model List<ServiceReview>
+@{
+    ViewData["Title"] = "Customer ratings & reviews";
+    var migrationNeeded = ViewBag.MigrationNeeded as bool? == true;
+}
+
+<div class="section-header">
+    <div>
+        <p class="eyebrow">Financial officer · Feedback</p>
+        <h1 class="page-title h2 mb-0">Ratings &amp; reviews</h1>
+        <p class="text-muted mb-0">All ratings and reviews submitted by students and staff.</p>
+    </div>
+</div>
+
+@if (migrationNeeded)
+{
+    <div class="alert alert-warning">
+        The <strong>ServiceReviews</strong> table is not available yet. From the project folder run:
+        <code class="d-block mt-2">dotnet ef migrations add AddServiceReviews</code>
+        <code class="d-block">dotnet ef database update</code>
+    </div>
+}
+
+@{
+    var avg = Model != null && Model.Any() ? Model.Average(x => x.Rating) : 0;
+    var count = Model?.Count ?? 0;
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Total reviews</div>
+            <div class="stat-value">@count</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">Average rating</div>
+            <div class="stat-value">@(count > 0 ? avg.ToString("0.0") : "—")</div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-md-4">
+        <div class="stat-card">
+            <div class="stat-label">5-star reviews</div>
+            <div class="stat-value">@(Model?.Count(x => x.Rating == 5) ?? 0)</div>
+        </div>
+    </div>
+</div>
+
+<section class="content-card">
+    <h2 class="h5 fw-bold mb-3">All customer feedback</h2>
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Category</th>
+                        <th>Rating</th>
+                        <th>Review</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        var name = r.Customer?.AppUser != null
+                            ? $"{r.Customer.AppUser.FirstName} {r.Customer.AppUser.LastName}"
+                            : $"Customer #{r.CustomerId}";
+                        <tr>
+                            <td class="text-nowrap">@r.CreatedAtUtc.ToString("dd MMM yyyy")</td>
+                            <td>@name</td>
+                            <td><span class="status-pill status-neutral">@r.Category</span></td>
+                            <td>
+                                <span class="text-warning fw-bold">@r.Rating</span>
+                                <span class="text-muted small">/ 5</span>
+                            </td>
+                            <td style="max-width:320px;">@r.Comment</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No ratings or reviews have been submitted yet.</div>
+    }
+</section>

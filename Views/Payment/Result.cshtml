@@ -1,0 +1,76 @@
+@model Payment
+@{
+    ViewData["Title"] = "Payment result";
+    var name = $"{Model.Customer?.AppUser?.FirstName} {Model.Customer?.AppUser?.LastName}".Trim();
+    var ok = Model.Status == PaymentStatus.Accepted;
+    var failed = Model.Status is PaymentStatus.Failed or PaymentStatus.Rejected;
+    var pendingReview = Model.Status == PaymentStatus.Pending;
+    var awaiting = Model.Status is PaymentStatus.AwaitingAuthentication or PaymentStatus.Processing;
+}
+<div class="content-card fx-success-panel">
+    @if (ok)
+    {
+        <div class="fx-success-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></div>
+        <h1 class="h3 fw-bold">Payment successful</h1>
+        <p class="text-muted">Your payment has been <strong>approved by a Financial Officer</strong> and is officially paid.</p>
+        <p class="fx-status completed d-inline-flex mb-4"><i class="fa-solid fa-circle-check" aria-hidden="true"></i> PAID / SUCCESSFUL</p>
+    }
+    else if (Model.Status == PaymentStatus.Rejected)
+    {
+        <div class="fx-success-icon" style="background:#fef2f2;color:#dc2626" aria-hidden="true"><i class="fa-solid fa-xmark"></i></div>
+        <h1 class="h3 fw-bold">Payment not accepted</h1>
+        <p class="text-muted">@(Model.FailureReason ?? "Your payment was rejected by the Financial Officer.")</p>
+        <p class="fx-status failed d-inline-flex mb-4"><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i> REJECTED</p>
+    }
+    else if (Model.Status == PaymentStatus.Failed)
+    {
+        <div class="fx-success-icon" style="background:#fef2f2;color:#dc2626" aria-hidden="true"><i class="fa-solid fa-xmark"></i></div>
+        <h1 class="h3 fw-bold">Payment could not be verified</h1>
+        <p class="text-muted">@(Model.FailureReason ?? "Authentication or processing failed. The transaction was not completed.")</p>
+        <p class="fx-status failed d-inline-flex mb-4"><i class="fa-solid fa-circle-xmark" aria-hidden="true"></i> FAILED / NOT COMPLETED</p>
+    }
+    else if (pendingReview)
+    {
+        <div class="fx-success-icon" style="background:#fff7ed;color:#d97706" aria-hidden="true"><i class="fa-solid fa-clock"></i></div>
+        <h1 class="h3 fw-bold">Payment pending review</h1>
+        <p class="text-muted">
+            Your payment has been received@(string.IsNullOrEmpty(Model.PaymentMethod) ? "" : " via " + Model.PaymentMethod)
+            and is <strong>awaiting Financial Officer review</strong>.
+            It is <strong>not</strong> marked as paid until an officer accepts it.
+        </p>
+        <p class="fx-status pending d-inline-flex mb-4"><i class="fa-solid fa-clock" aria-hidden="true"></i> PENDING REVIEW</p>
+    }
+    else
+    {
+        <div class="fx-success-icon" style="background:#fff7ed;color:#d97706" aria-hidden="true"><i class="fa-solid fa-hourglass-half"></i></div>
+        <h1 class="h3 fw-bold">Payment in progress</h1>
+        <p class="text-muted">Current status: <strong>@Model.Status</strong>. Complete authentication if required.</p>
+        <p class="fx-status pending d-inline-flex mb-4"><i class="fa-solid fa-clock" aria-hidden="true"></i> @Model.Status</p>
+    }
+
+    <div class="text-start mx-auto mb-4" style="max-width:380px">
+        <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted">Reference</span><span class="fw-semibold">@Model.TransactionReference</span></div>
+        <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted">Customer</span><span class="fw-semibold">@name</span></div>
+        <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted">Service</span><span class="fw-semibold">@Model.PaymentType</span></div>
+        <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted">Amount</span><span class="fw-semibold">@Model.Amount.ToString("C")</span></div>
+        <div class="d-flex justify-content-between border-bottom py-2"><span class="text-muted">Method</span><span class="fw-semibold">@(Model.PaymentMethod ?? "—")</span></div>
+        <div class="d-flex justify-content-between py-2"><span class="text-muted">Date</span><span class="fw-semibold">@((Model.CompletedAtUtc ?? Model.SubmittedAtUtc).ToLocalTime().ToString("dd MMM yyyy HH:mm"))</span></div>
+    </div>
+
+    <div class="d-flex flex-wrap justify-content-center gap-2">
+        @if (ok)
+        {
+            <a class="btn btn-primary" asp-action="Receipt" asp-route-id="@Model.Id">View receipt</a>
+        }
+        @if (failed)
+        {
+            <a class="btn btn-primary" asp-action="Checkout">Try again</a>
+        }
+        @if (awaiting)
+        {
+            <a class="btn btn-primary" asp-action="Authenticate" asp-route-id="@Model.Id">Continue authentication</a>
+        }
+        <a class="btn btn-outline-secondary" asp-controller="Customer" asp-action="Index">Return to dashboard</a>
+        <a class="btn btn-outline-secondary" asp-action="MyPayments">Payment history</a>
+    </div>
+</div>

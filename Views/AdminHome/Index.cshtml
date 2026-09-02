@@ -1,0 +1,95 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Command centre";
+    var appsPending = ViewData["PendingApplications"] as int? ?? 0;
+    var paymentsToday = ViewData["PaymentsToday"] as int? ?? 0;
+    var availableUnits = ViewData["AvailableUnits"] as int? ?? 0;
+    var occupiedUnits = ViewData["OccupiedUnits"] as int? ?? 0;
+}
+
+<section class="fx-welcome mb-4">
+    <div class="position-relative" style="z-index:1">
+        <p class="eyebrow mb-0">Administrator · Control centre</p>
+        <h1>Welcome, @Model.FullName</h1>
+        <p>Monitor customers, officers, payments and accommodation across ArnoxPay.</p>
+    </div>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-2">
+        <div class="stat-card h-100"><div class="stat-label">Customers</div><div class="stat-value">@Model.ActiveCustomers</div></div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card h-100"><div class="stat-label">Officers</div><div class="stat-value">@Model.ActiveFinancialOfficers</div></div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card h-100"><div class="stat-label">Pending pay</div><div class="stat-value">@Model.PendingPayments</div></div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card h-100"><div class="stat-label">Completed</div><div class="stat-value">@Model.AcceptedPayments</div></div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card h-100"><div class="stat-label">Value accepted</div><div class="stat-value" style="font-size:1.15rem">@Model.AcceptedTotal.ToString("C")</div></div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="stat-card h-100"><div class="stat-label">Apps pending</div><div class="stat-value">@appsPending</div></div>
+    </div>
+</div>
+
+<section class="content-card mb-4">
+    <h2 class="h6 fw-bold mb-3">System actions</h2>
+    <div class="fx-command">
+        <a class="fx-action" asp-controller="AdminCustomer" asp-action="List"><i class="fa-solid fa-user-plus" aria-hidden="true"></i><span>Customers</span></a>
+        <a class="fx-action" asp-controller="AdminFinancialOfficer" asp-action="AddUpdate"><i class="fa-solid fa-user-tie" aria-hidden="true"></i><span>Add officer</span></a>
+        <a class="fx-action" asp-controller="AdminAccomodation" asp-action="List"><i class="fa-solid fa-building" aria-hidden="true"></i><span>Accommodation</span></a>
+        <a class="fx-action" asp-controller="AdminAccomodation" asp-action="AssignmentRequests"><i class="fa-solid fa-clipboard-list" aria-hidden="true"></i><span>Review applications</span></a>
+        <a class="fx-action" asp-controller="Payment" asp-action="Index"><i class="fa-solid fa-wallet" aria-hidden="true"></i><span>View payments</span></a>
+        <a class="fx-action" asp-controller="AdminReport" asp-action="Index"><i class="fa-solid fa-chart-line" aria-hidden="true"></i><span>Reports</span></a>
+    </div>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="content-card h-100">
+            <h2 class="h6 fw-bold">Accommodation</h2>
+            <p class="mb-1 small text-muted">Available units: <strong>@availableUnits</strong></p>
+            <p class="mb-3 small text-muted">Occupied units: <strong>@occupiedUnits</strong></p>
+            <a class="btn btn-sm btn-outline-primary" asp-controller="AdminAccomodation" asp-action="List">Manage units</a>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="content-card h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="h6 fw-bold mb-0">Recent financial activity</h2>
+                <a class="btn btn-sm btn-outline-secondary" asp-controller="Payment" asp-action="Index">All payments</a>
+            </div>
+            @if (Model.RecentPayments.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead><tr><th>Customer</th><th>Service</th><th>Amount</th><th>Status</th></tr></thead>
+                        <tbody>
+                        @foreach (var p in Model.RecentPayments.Take(6))
+                        {
+                            <tr>
+                                <td>@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName</td>
+                                <td>@p.PaymentType</td>
+                                <td>@p.Amount.ToString("C")</td>
+                                <td>
+                                    <span class="fx-status @(p.Status == PaymentStatus.Accepted ? "completed" : p.Status == PaymentStatus.Rejected ? "failed" : "pending")">
+                                        @p.Status
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="empty-state">No payment activity yet.</div>
+            }
+        </div>
+    </div>
+</div>

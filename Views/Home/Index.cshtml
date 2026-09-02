@@ -1,0 +1,108 @@
+@{
+    ViewData["Title"] = "University services & online payments";
+    ViewData["FullBleed"] = true;
+}
+
+<!-- Hero — existing split layout; campus images in slant panels -->
+<section class="pg-hero">
+    <div class="pg-hero-inner">
+        <div class="pg-hero-copy">
+            <p class="pg-slogan">Secure Payments. Smarter Services.</p>
+            <h1 class="pg-headline">
+                One platform.<br />
+                <span class="pg-c-blue">Every payment.</span><br />
+                Every <span class="pg-c-purple">service.</span>
+            </h1>
+            <p class="pg-sub">
+                Manage accommodation, utilities, permits and secure payments — without the queue.
+            </p>
+            <div class="pg-cta-row">
+                <a class="pg-btn pg-btn-primary" asp-controller="Account" asp-action="Register">Get started</a>
+                <a class="pg-btn pg-btn-outline" asp-controller="Account" asp-action="Login">Sign in</a>
+            </div>
+        </div>
+
+        <div class="pg-hero-visual" aria-hidden="true">
+            <div class="pg-slant-stack pg-slant-stack--two">
+                <div class="pg-slant">
+                    <img src="~/images/campus/digital-payments.jpg"
+                         alt="" loading="eager" asp-append-version="true" />
+                </div>
+                <div class="pg-slant">
+                    <img src="~/images/campus/ufs-qwaqwa-gate.jpg"
+                         alt="" loading="eager" asp-append-version="true" />
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pg-strip" id="solutions">
+    <div class="pg-container">
+        <div class="pg-strip-grid">
+            <div class="pg-strip-item">
+                <div class="pg-strip-icon"><i class="fa-solid fa-building-columns"></i></div>
+                <span>Accommodation</span>
+            </div>
+            <div class="pg-strip-item">
+                <div class="pg-strip-icon"><i class="fa-solid fa-bolt"></i></div>
+                <span>Utilities</span>
+            </div>
+            <div class="pg-strip-item">
+                <div class="pg-strip-icon"><i class="fa-solid fa-wallet"></i></div>
+                <span>Online payments</span>
+            </div>
+            <div class="pg-strip-item">
+                <div class="pg-strip-icon"><i class="fa-solid fa-id-card"></i></div>
+                <span>Parking permits</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="pg-features" id="how-it-works">
+    <div class="pg-container">
+        <div class="pg-section-head">
+            <p class="pg-eyebrow">How ArnoxPay works</p>
+            <h2>Everything your campus estate needs</h2>
+            <p class="pg-section-sub">
+                From digital payments to rent, electricity and residence management — one secure platform.
+            </p>
+        </div>
+        <div class="pg-feature-grid">
+            <article class="pg-feature-card">
+                <div class="pg-feature-img">
+                    <img src="~/images/campus/digital-payments.jpg"
+                         alt="Online payments" loading="lazy" asp-append-version="true" />
+                </div>
+                <div class="pg-feature-body">
+                    <h3>Online payments</h3>
+                    <p>Pay rent, electricity, water and other services online. Every request is reviewed securely.</p>
+                </div>
+            </article>
+            <article class="pg-feature-card">
+                <div class="pg-feature-img">
+                    <img src="~/images/campus/charlotte-maxeke-residence.jpg"
+                         alt="Student accommodation" loading="lazy" asp-append-version="true" />
+                </div>
+                <div class="pg-feature-body">
+                    <h3>Accommodation &amp; utilities</h3>
+                    <p>Browse residences, request rooms, track balances and report issues from one place.</p>
+                </div>
+            </article>
+            <article class="pg-feature-card">
+                <div class="pg-feature-img">
+                    <img src="~/images/campus/albert-luthuli-amphitheatre.jpg"
+                         alt="UFS QwaQwa campus" loading="lazy" asp-append-version="true" />
+                </div>
+                <div class="pg-feature-body">
+                    <h3>Centralised service management</h3>
+                    <p>A single dashboard for payments, permits and service status — built for students and staff.</p>
+                </div>
+            </article>
+        </div>
+        <div class="pg-features-cta">
+            <a class="pg-btn pg-btn-primary" asp-controller="Account" asp-action="Register">Create your account</a>
+        </div>
+    </div>
+</section>

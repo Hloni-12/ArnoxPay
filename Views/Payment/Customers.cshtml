@@ -1,0 +1,44 @@
+@model List<Customer>
+@{
+    ViewData["Title"] = "Customers";
+}
+<div class="mb-4">
+    <h1 class="page-title h2 mb-1">Customers</h1>
+    <p class="text-muted mb-0">View customer accounts and assist with password resets where authorised.</p>
+</div>
+<section class="content-card p-0 overflow-hidden">
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>User / staff number</th>
+                    <th>Email</th>
+                    <th>Type</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.AppUser?.FirstName @c.AppUser?.LastName</td>
+                    <td>@c.UserNumber</td>
+                    <td>@c.AppUser?.Email</td>
+                    <td>@c.Category</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="ResetPassword" asp-route-id="@c.Id">Reset password</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="empty-state">No customers found.</div>
+}
+</section>

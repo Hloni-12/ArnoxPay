@@ -1,0 +1,27 @@
+@model Payment
+@{
+    ViewData["Title"] = "Demo authentication";
+}
+<div class="fx-pay-shell">
+    <div class="content-card">
+        <div class="alert alert-warning border-0 mb-4" role="status">
+            <strong>DEMO PAYMENT AUTHENTICATION</strong><br />
+            This step does <em>not</em> contact a bank, card issuer, or OTP provider. It only demonstrates ArnoxPay’s payment workflow.
+        </div>
+        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 4 · Authenticate transaction</p>
+        <h1 class="page-title h3 mb-3">Authenticate transaction</h1>
+
+        <dl class="row">
+            <dt class="col-sm-4">Transaction</dt><dd class="col-sm-8 fw-semibold">@Model.TransactionReference</dd>
+            <dt class="col-sm-4">Amount</dt><dd class="col-sm-8">@Model.Amount.ToString("C")</dd>
+            <dt class="col-sm-4">Service</dt><dd class="col-sm-8">@Model.PaymentType</dd>
+        </dl>
+
+        <form method="post" class="d-flex flex-wrap gap-2 mt-3">
+            @Html.AntiForgeryToken()
+            <button type="submit" name="action" value="confirm" class="btn btn-primary btn-lg">Confirm authentication</button>
+            <button type="submit" name="action" value="cancel" class="btn btn-outline-danger btn-lg">Cancel</button>
+        </form>
+        <p class="text-muted small mt-3 mb-0">ArnoxPay never asks for card PINs, CVVs, banking passwords, or real OTPs on this screen.</p>
+    </div>
+</div>

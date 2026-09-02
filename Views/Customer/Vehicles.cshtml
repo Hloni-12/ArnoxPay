@@ -1,0 +1,125 @@
+@model List<Vehicle>
+@{
+    ViewData["Title"] = "My Vehicles";
+    var fullName = ViewData["FullName"] as string ?? "Customer";
+    var count = Model?.Count ?? 0;
+    var extra = Math.Max(0, count - 2);
+}
+
+<div class="section-header">
+    <div>
+        <p class="eyebrow">Parking · Vehicles</p>
+        <h1 class="page-title h2 mb-0">Register your vehicles</h1>
+        <p class="text-muted mb-0">Register every vehicle that will use estate parking. The first two vehicles are included; additional vehicles require a parking fee payment.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a class="btn btn-outline-secondary" asp-controller="Customer" asp-action="Parking">Parking map</a>
+        <a class="btn btn-primary" asp-controller="Payment" asp-action="AddUpdate">Pay parking fee</a>
+    </div>
+</div>
+
+<div class="alert mb-4" style="background:var(--arnox-grad-soft);border:0;border-radius:var(--radius);">
+    <div class="d-flex gap-3 align-items-start">
+        <i class="fa-solid fa-circle-info mt-1" style="color:var(--arnox-purple);"></i>
+        <div>
+            <strong class="d-block mb-1">Parking fee rule</strong>
+            <span class="text-muted small">Up to <strong>two</strong> vehicles are included. If you register <strong>more than two cars</strong>, each additional vehicle must be paid for under <em>Parking</em> in Payments. Data is stored in SQL Server (<code>Vehicles</code> table).</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><div class="stat-card"><div class="stat-label">Registered vehicles</div><div class="stat-value">@count</div></div></div>
+    <div class="col-md-4"><div class="stat-card"><div class="stat-label">Included (no extra fee)</div><div class="stat-value">@Math.Min(count, 2)</div></div></div>
+    <div class="col-md-4"><div class="stat-card"><div class="stat-label">Extra (fee required)</div><div class="stat-value">@extra</div></div></div>
+</div>
+
+<section class="content-card mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 fw-bold mb-0">Your vehicles</h2>
+        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+            <i class="fa-solid fa-plus me-1"></i> Register vehicle
+        </button>
+    </div>
+    @if (Model != null && Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Registration</th>
+                        <th>Make / model</th>
+                        <th>Colour</th>
+                        <th>Registered</th>
+                        <th>Fee status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var i = 0; }
+                    @foreach (var v in Model)
+                    {
+                        i++;
+                        <tr>
+                            <td class="fw-semibold">@v.RegistrationNumber</td>
+                            <td>@(string.IsNullOrWhiteSpace(v.Make) && string.IsNullOrWhiteSpace(v.Model) ? "—" : $"{v.Make} {v.Model}".Trim())</td>
+                            <td>@(v.Colour ?? "—")</td>
+                            <td>@v.RegisteredAtUtc.ToString("dd MMM yyyy")</td>
+                            <td>
+                                @if (i <= 2)
+                                { <span class="status-pill status-success">Included</span> }
+                                else
+                                { <span class="status-pill status-pending">Parking fee required</span> }
+                            </td>
+                            <td>
+                                <form asp-controller="Vehicle" asp-action="Remove" method="post" class="d-inline" onsubmit="return confirm('Remove this vehicle?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@v.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+    else
+    {
+        <div class="empty-state">No vehicles registered yet. Use <strong>Register vehicle</strong> to add one. Records are saved to SQL Server.</div>
+    }
+</section>
+
+<div class="modal fade" id="addVehicleModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border:0;border-radius:var(--radius);box-shadow:var(--arnox-shadow-lg);">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold">Register a vehicle</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form asp-controller="Vehicle" asp-action="Create" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label">Registration number</label>
+                        <input type="text" name="registrationNumber" class="form-control" placeholder="e.g. ABC 123 FS" required maxlength="20" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Make</label>
+                        <input type="text" name="make" class="form-control" placeholder="e.g. Toyota" maxlength="60" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Model</label>
+                        <input type="text" name="model" class="form-control" placeholder="e.g. Corolla" maxlength="60" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Colour</label>
+                        <input type="text" name="colour" class="form-control" placeholder="e.g. White" maxlength="40" />
+                    </div>
+                    <p class="text-muted small">If this is your 3rd or later vehicle, complete a Parking payment after registering.</p>
+                    <button type="submit" class="btn btn-primary w-100">Save vehicle</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

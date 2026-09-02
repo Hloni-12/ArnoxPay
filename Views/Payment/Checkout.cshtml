@@ -1,0 +1,41 @@
+@model PaymentCreateModel
+@{
+    ViewData["Title"] = "Start payment";
+}
+<div class="fx-pay-shell">
+    <div class="content-card">
+        <div class="alert alert-warning border-0 mb-4" role="status">
+            <strong>DEMO PAYMENT ENVIRONMENT</strong> — No real bank or card network is contacted.
+        </div>
+        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 1 · Service selection</p>
+        <h1 class="page-title h3 mb-1">What are you paying for?</h1>
+        <p class="text-muted mb-4">Choose a service and amount. Payment is <strong>not</strong> completed on this step.</p>
+
+        <form method="post" asp-action="Checkout" class="row g-3">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+            <div class="col-12">
+                <label asp-for="PaymentType" class="form-label fw-semibold">Service</label>
+                <select asp-for="PaymentType" asp-items="Html.GetEnumSelectList<PaymentType>()" class="form-select form-select-lg"></select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Amount" class="form-label fw-semibold">Amount due (R)</label>
+                <input asp-for="Amount" class="form-control form-control-lg" min="0.01" step="0.01" />
+                <span asp-validation-for="Amount" class="text-danger small"></span>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="AccountReference" class="form-label fw-semibold">Account / reference</label>
+                <input asp-for="AccountReference" class="form-control form-control-lg" />
+                <span asp-validation-for="AccountReference" class="text-danger small"></span>
+            </div>
+            <div class="col-12">
+                <label asp-for="Notes" class="form-label">Description (optional)</label>
+                <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary btn-lg">Continue to Payment</button>
+                <a class="btn btn-outline-secondary btn-lg ms-1" asp-controller="Customer" asp-action="Index">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>

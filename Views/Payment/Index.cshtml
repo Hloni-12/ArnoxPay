@@ -1,0 +1,70 @@
+@model List<Payment>
+@{
+    ViewData["Title"] = "Review payments";
+}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <h1 class="page-title h2 mb-1">Review payments</h1>
+        <p class="text-muted mb-0">Accept or reject customer payment requests awaiting financial review.</p>
+    </div>
+    <div class="btn-group">
+        <a class="btn btn-sm btn-outline-primary" asp-action="Index">All</a>
+        <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-status="@PaymentStatus.Pending">Pending</a>
+        <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-status="@PaymentStatus.Accepted">Accepted</a>
+        <a class="btn btn-sm btn-outline-primary" asp-action="Index" asp-route-status="@PaymentStatus.Failed">Failed</a>
+    </div>
+</div>
+
+<section class="content-card p-0 overflow-hidden">
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>Service</th>
+                    <th>Txn ref</th>
+                    <th>Account ref</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th class="text-end">Review</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName</td>
+                    <td>@p.PaymentType</td>
+                    <td class="small">@(p.TransactionReference ?? "—")</td>
+                    <td>@p.AccountReference</td>
+                    <td>@p.Amount.ToString("C")</td>
+                    <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
+                    <td class="text-end">
+                        @if (p.Status == PaymentStatus.Pending)
+                        {
+                            <form asp-action="Review" method="post" class="d-inline-flex flex-wrap gap-1 justify-content-end">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="PaymentId" value="@p.Id" />
+                                <input name="OfficerReference" class="form-control form-control-sm" style="width:130px" placeholder="Reference" />
+                                <button name="Status" value="@PaymentStatus.Accepted" class="btn btn-sm btn-success" type="submit">Accept</button>
+                                <button name="Status" value="@PaymentStatus.Rejected" class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span class="text-muted small">—</span>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="empty-state">No matching payment requests.</div>
+}
+</section>

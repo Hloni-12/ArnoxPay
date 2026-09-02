@@ -1,0 +1,56 @@
+@model List<Customer>
+@{ ViewData["Title"] = "Customers"; }
+<div class="d-flex justify-content-between align-items-end mb-4">
+    <div>
+        <h1 class="page-title h2 mb-1">Customer accounts</h1>
+        <p class="text-muted mb-0">View, update, disable, or delete customer information.</p>
+    </div>
+</div>
+<section class="content-card p-0 overflow-hidden">
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Customer</th>
+                    <th>User Number</th>
+                    <th>Type</th>
+                    <th>Official no.</th>
+                    <th>Accommodation</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@c.AppUser?.FirstName @c.AppUser?.LastName</strong><br />
+                        <small>@c.AppUser?.Email</small>
+                    </td>
+                    <td>@c.UserNumber</td>
+                    <td>@c.Category</td>
+                    <td>@c.UniversityNumber</td>
+                    <td>@c.Accomodation?.UnitNumber</td>
+                    <td>@(c.AppUser?.IsActive == true ? "Active" : "Inactive")</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="AddUpdate" asp-route-id="@c.Id">Edit</a>
+                        <form asp-action="ToggleActive" asp-route-id="@c.Id" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button class="btn btn-sm btn-outline-secondary">Enable / Disable</button>
+                        </form>
+                        <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@c.Id">Delete</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="empty-state">No customers have registered.</div>
+}
+</section>

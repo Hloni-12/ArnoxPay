@@ -1,0 +1,23 @@
+@model Payment
+@{
+    ViewData["Title"] = "Processing payment";
+}
+<div class="fx-pay-shell">
+    <div class="content-card text-center py-5">
+        <div class="spinner-border text-primary mb-3" role="status"><span class="visually-hidden">Processing</span></div>
+        <h1 class="h3 fw-bold">Processing payment</h1>
+        <p class="text-muted">Your payment is being processed in the demo environment. After this step it will await Financial Officer review — it will not be marked as paid yet.</p>
+        <p class="mb-1"><strong>@Model.TransactionReference</strong></p>
+        <p class="mb-1">@Model.PaymentType · @Model.Amount.ToString("C")</p>
+        <p class="fx-status pending d-inline-flex"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> PROCESSING</p>
+
+        <form id="completeForm" method="post" asp-action="CompleteProcessing" asp-route-id="@Model.Id" class="d-none">
+            @Html.AntiForgeryToken()
+        </form>
+    </div>
+</div>
+@section Scripts {
+<script>
+  setTimeout(function () { document.getElementById('completeForm').submit(); }, 1500);
+</script>
+}

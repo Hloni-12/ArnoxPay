@@ -1,0 +1,2 @@
+@model Customer
+@{ ViewData["Title"] = "Delete customer"; }<div class="auth-card mx-auto" style="max-width:620px"><h1 class="page-title h3">Delete customer</h1><p>Are you sure you want to delete <strong>@Model.AppUser?.FirstName @Model.AppUser?.LastName</strong>?</p><p class="text-muted small">Customers with payment records cannot be deleted; deactivate them instead.</p><form method="post"><button class="btn btn-danger">Delete customer</button><a class="btn btn-outline-secondary ms-2" asp-action="List">Cancel</a></form></div>

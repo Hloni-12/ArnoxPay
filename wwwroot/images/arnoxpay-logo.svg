@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 64" role="img" aria-label="ArnoxPay">
+  <defs>
+    <linearGradient id="apFill2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+    <linearGradient id="apWord" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4f46e5"/>
+      <stop offset="100%" stop-color="#7c3aed"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="4" width="56" height="56" rx="14" fill="url(#apFill2)"/>
+  <path d="M28 14 L16 19.5 V32 C16 40 21.5 46.5 28 49 C34.5 46.5 40 40 40 32 V19.5 Z"
+        fill="#fff" opacity="0.96"/>
+  <path d="M21.5 31.5 L26 36 L35.5 24.5"
+        fill="none" stroke="#4f46e5" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="68" y="40" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif"
+        font-size="28" font-weight="800" fill="#0f172a" letter-spacing="-0.6">Arnox</text>
+  <text x="158" y="40" font-family="Inter, system-ui, -apple-system, Segoe UI, sans-serif"
+        font-size="28" font-weight="800" fill="url(#apWord)" letter-spacing="-0.6">Pay</text>
+</svg>

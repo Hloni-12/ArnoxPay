@@ -1,0 +1,59 @@
+@model List<Payment>
+@{
+    ViewData["Title"] = "Payment history";
+}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <h1 class="page-title h2 mb-1">Payment history</h1>
+        <p class="text-muted mb-0">Track every request from checkout through final status.</p>
+    </div>
+    <a class="btn btn-primary" asp-action="Checkout">Make a payment</a>
+</div>
+
+<section class="content-card p-0 overflow-hidden">
+@if (Model.Any())
+{
+    <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+            <thead>
+                <tr>
+                    <th>Service</th>
+                    <th>Reference</th>
+                    <th>Txn</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td>@p.PaymentType</td>
+                    <td>@p.AccountReference</td>
+                    <td class="small">@(p.TransactionReference ?? "—")</td>
+                    <td>@p.Amount.ToString("C")</td>
+                    <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
+                    <td>@p.SubmittedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" asp-action="Result" asp-route-id="@p.Id">Details</a>
+                        @if (p.Status == PaymentStatus.Accepted)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Receipt" asp-route-id="@p.Id">Receipt</a>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        No payments yet.
+        <a asp-action="Checkout">Start a payment</a>.
+    </div>
+}
+</section>

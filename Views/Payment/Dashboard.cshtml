@@ -1,0 +1,52 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Financial operations";
+}
+
+<section class="fx-welcome mb-4">
+    <div class="position-relative" style="z-index:1">
+        <p class="eyebrow mb-0">Financial Officer</p>
+        <h1>Welcome, @Model.FullName</h1>
+        <p>Review payments, assist customers, and keep the estate finances moving.</p>
+    </div>
+</section>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Customers</div><div class="stat-value">@Model.ActiveCustomers</div></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Pending</div><div class="stat-value">@Model.PendingPayments</div></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Completed</div><div class="stat-value">@Model.AcceptedPayments</div></div></div>
+    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Accepted value</div><div class="stat-value" style="font-size:1.25rem">@Model.AcceptedTotal.ToString("C")</div></div></div>
+</div>
+
+<div class="fx-command mb-4">
+    <a class="fx-action" asp-controller="Payment" asp-action="Customers"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Find customer</span></a>
+    <a class="fx-action" asp-controller="Payment" asp-action="Index"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i><span>View payments</span></a>
+    <a class="fx-action" asp-controller="AdminReport" asp-action="Index"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i><span>Generate report</span></a>
+    <a class="fx-action" asp-controller="Payment" asp-action="Customers"><i class="fa-solid fa-headset" aria-hidden="true"></i><span>Assist customer</span></a>
+    <a class="fx-action" asp-controller="Reviews" asp-action="Index"><i class="fa-solid fa-star" aria-hidden="true"></i><span>Reviews</span></a>
+</div>
+
+<section class="content-card">
+    <h2 class="h5 fw-bold mb-3">Recent payment activity</h2>
+    @if (Model.RecentPayments.Any())
+    {
+        <ul class="fx-timeline">
+        @foreach (var p in Model.RecentPayments)
+        {
+            var dot = p.Status == PaymentStatus.Accepted ? "ok" : p.Status == PaymentStatus.Rejected ? "fail" : "wait";
+            <li>
+                <span class="fx-dot @dot" aria-hidden="true"></span>
+                <div>
+                    <div class="title">@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName · @p.PaymentType</div>
+                    <div class="meta">@p.SubmittedAtUtc.ToString("dd MMM yyyy HH:mm") · @p.Status</div>
+                </div>
+                <div class="amount">@p.Amount.ToString("C")</div>
+            </li>
+        }
+        </ul>
+    }
+    else
+    {
+        <div class="empty-state">No recent transactions.</div>
+    }
+</section>
