@@ -11,7 +11,7 @@ builder.Services.AddControllersWithViews();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Application services
 builder.Services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
