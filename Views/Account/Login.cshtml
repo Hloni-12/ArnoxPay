@@ -32,9 +32,8 @@
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
             <div class="mb-3">
-                <label asp-for="LoginId" class="form-label">Email Address</label>
-                <input asp-for="LoginId" class="form-control form-control-lg" autocomplete="username"
-                       placeholder="name@example.com or student/staff number" />
+                <label asp-for="LoginId" class="form-label">Username</label>
+                <input asp-for="LoginId" class="form-control form-control-lg" autocomplete="username"/>
                 <span asp-validation-for="LoginId" class="text-danger small"></span>
                 <div class="form-text">Customers may also sign in with their Student or Staff number.</div>
             </div>
