@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArnoxPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260908131603_initial")]
+    [Migration("20260920193455_initial")]
     partial class initial
     {
         /// <inheritdoc />

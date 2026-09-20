@@ -47,7 +47,7 @@ public sealed class CheckoutService(AppDbContext context, IPaymentGateway gatewa
         await context.SaveChangesAsync();
     }
 
-    public async Task<PaymentGatewayResult> AuthenticateAsync(Payment payment, bool demoConfirm)
+    public async Task<PaymentGatewayResult> AuthenticateAsync(Payment payment, bool confirmed)
     {
         if (payment.Status != PaymentStatus.AwaitingAuthentication)
         {
@@ -64,7 +64,7 @@ public sealed class CheckoutService(AppDbContext context, IPaymentGateway gatewa
             TransactionReference = payment.TransactionReference ?? payment.Id.ToString(),
             Amount = payment.Amount,
             ServiceName = payment.PaymentType.ToString(),
-            DemoConfirm = demoConfirm
+            Confirmed = confirmed
         });
 
         if (!result.Success)
@@ -79,7 +79,7 @@ public sealed class CheckoutService(AppDbContext context, IPaymentGateway gatewa
         payment.AuthenticatedAtUtc = DateTime.UtcNow;
         payment.Status = PaymentStatus.Processing;
         payment.ProcessingStartedAtUtc = DateTime.UtcNow;
-        // Store demo gateway provider ref in notes if empty of gateway field
+        // Store gateway provider ref in notes if empty of gateway field
         if (!string.IsNullOrWhiteSpace(result.ProviderReference))
             payment.OfficerReference ??= result.ProviderReference;
 
@@ -88,7 +88,7 @@ public sealed class CheckoutService(AppDbContext context, IPaymentGateway gatewa
     }
 
     /// <summary>
-    /// After demo/real gateway processing succeeds, payment becomes PENDING REVIEW —
+    /// After payment gateway processing succeeds, payment becomes PENDING REVIEW —
     /// NOT Accepted/PAID. Financial Officer must accept before PAID.
     /// </summary>
     public async Task<PaymentGatewayResult> ProcessAsync(Payment payment)

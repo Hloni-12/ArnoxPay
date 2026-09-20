@@ -1,8 +1,8 @@
 namespace ArnoxPay.Infrastructure;
 
 /// <summary>
-/// Abstraction for payment authentication/processing.
-/// Demo implementation simulates auth; a real gateway can replace this later.
+/// Abstraction for payment submission processing.
+/// Implementations persist outcomes via the checkout service into SQL Server.
 /// </summary>
 public interface IPaymentGateway
 {
@@ -18,8 +18,8 @@ public sealed class PaymentAuthRequest
     public string TransactionReference { get; init; } = string.Empty;
     public decimal Amount { get; init; }
     public string ServiceName { get; init; } = string.Empty;
-    /// <summary>Demo only: true = confirm authentication, false = reject.</summary>
-    public bool DemoConfirm { get; init; }
+    /// <summary>True when the customer confirms submission; false when cancelled.</summary>
+    public bool Confirmed { get; init; }
 }
 
 public sealed class PaymentProcessRequest

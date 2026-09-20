@@ -1,17 +1,13 @@
 @model Payment
 @{
     ViewData["Title"] = "Confirm payment";
-    var gateway = ViewBag.Gateway as ArnoxPay.Infrastructure.IPaymentGateway;
     var name = $"{Model.Customer?.AppUser?.FirstName} {Model.Customer?.AppUser?.LastName}".Trim();
 }
 <div class="fx-pay-shell">
     <div class="content-card">
-        <div class="alert alert-warning border-0 mb-3" role="status">
-            <strong>DEMO PAYMENT AUTHENTICATION</strong> — Simulated verification only. Not a bank or card-issuer check.
-        </div>
         <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 3 · Confirm your payment</p>
-        <h1 class="page-title h3 mb-2">You are about to request a payment of @Model.Amount.ToString("C") for @Model.PaymentType.</h1>
-        <p class="text-muted">The transaction must be verified before it can complete.</p>
+        <h1 class="page-title h3 mb-2">You are about to submit a payment of @Model.Amount.ToString("C") for @Model.PaymentType.</h1>
+        <p class="text-muted">Confirm to send this payment for Financial Officer review. It will not be marked as paid until an officer accepts it.</p>
 
         <ul class="list-unstyled mb-4">
             <li class="mb-1"><strong>Customer:</strong> @name</li>
@@ -23,7 +19,7 @@
 
         <div class="fx-pay-summary mb-4">
             <i class="fa-solid fa-lock me-2" aria-hidden="true"></i>
-            Verification is required. Status remains <strong>not paid</strong> until authentication and processing succeed.
+            Status remains <strong>not paid</strong> until authentication, processing, and Financial Officer acceptance succeed.
         </div>
 
         <a class="btn btn-primary btn-lg" asp-action="Authenticate" asp-route-id="@Model.Id">Continue to authentication</a>

@@ -62,9 +62,9 @@
                             else if (User.IsInRole(SystemRoles.Customer))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Customer" asp-action="Index">Dashboard</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Accomodation" asp-action="List">Services</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="AddUpdate">Payments</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Services" asp-action="Index">Services</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Accomodation" asp-action="List">Accommodation</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Checkout">Payments</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="MyPayments">Payment History</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Notification" asp-action="Index">Notifications</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Profile" asp-action="Index">Profile</a></li>
@@ -222,10 +222,10 @@
                 <section class="col-12 col-md-6 col-lg-3 footer-col" aria-labelledby="footer-services-heading">
                     <h2 id="footer-services-heading" class="footer-heading">Services</h2>
                     <ul class="footer-links">
-                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="solutions">Accommodation</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="solutions">Rent &amp; utilities</a></li>
-                        <li><a asp-controller="Payment" asp-action="Checkout">Online payments</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="how-it-works">Parking fees</a></li>
+                        <li><a asp-controller="Services" asp-action="Index">Rent &amp; utilities</a></li>
+                        <li><a asp-controller="Services" asp-action="Index">Online payments</a></li>
+                        <li><a asp-controller="Accomodation" asp-action="List">Accommodation</a></li>
+                        <li><a asp-controller="Payment" asp-action="Checkout" asp-route-type="Parking">Parking fees</a></li>
                     </ul>
                 </section>
 

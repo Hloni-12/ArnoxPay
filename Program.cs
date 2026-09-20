@@ -20,7 +20,7 @@ builder.Services.Configure<NotificationSettings>(
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
-builder.Services.AddScoped<IPaymentGateway, DemoPaymentGateway>();
+builder.Services.AddScoped<IPaymentGateway, InternalPaymentProcessor>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 
 // Routing (lowercase URLs)

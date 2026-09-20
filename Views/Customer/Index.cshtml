@@ -5,7 +5,6 @@
     var accUnit = ViewData["AccommodationUnit"] as string;
     var hasAccommodation = !string.IsNullOrWhiteSpace(accName);
 
-    // Name from DashboardViewModel (authenticated AppUser on the server).
     var displayName = !string.IsNullOrWhiteSpace(Model.FirstName)
         ? Model.FirstName.Trim()
         : (!string.IsNullOrWhiteSpace(Model.FullName)
@@ -22,14 +21,14 @@
             <h1 class="mb-2">@welcomeHeading</h1>
             <p class="mb-0">
                 Here&rsquo;s an overview of your ArnoxPay account.
-                Manage your university services, payments and accommodation from one place.
+                Track payments, accommodation and notifications from one place.
             </p>
         </div>
         <div class="d-flex flex-wrap gap-2">
-            <a class="btn btn-light" asp-controller="Payment" asp-action="AddUpdate">
-                <i class="fa-solid fa-bolt me-1" aria-hidden="true"></i> Make a Payment
+            <a class="btn btn-light" asp-controller="Services" asp-action="Index">
+                <i class="fa-solid fa-grid-2 me-1" aria-hidden="true"></i> Explore Services
             </a>
-            <a class="btn btn-outline-light" asp-controller="Payment" asp-action="MyPayments">Payment history</a>
+            <a class="btn btn-outline-light" asp-controller="Accomodation" asp-action="List">View Accommodation</a>
         </div>
     </div>
 </section>
@@ -46,100 +45,46 @@
         <div class="hint">Request(s) awaiting review</div>
     </div>
     <div class="fx-metric pending">
-        <div class="label">Upcoming attention</div>
+        <div class="label">Attention</div>
         <div class="value">@(Model.PendingPayments > 0 ? Model.PendingPayments : 0)</div>
         <div class="hint">@(Model.PendingPayments > 0 ? "Pending reviews" : "You're up to date")</div>
     </div>
 </div>
 
-<section class="mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2 class="h5 fw-bold mb-0">Quick services</h2>
-        <span class="text-muted small">One platform. Every payment. Every service.</span>
-    </div>
-    <div class="row g-3">
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Accomodation" asp-action="List">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-building"></i></span>
-                <span class="service-tile-title">Accommodation</span>
-                <span class="service-tile-desc">Apply or manage residence</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Payment" asp-action="AddUpdate">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-house"></i></span>
-                <span class="service-tile-title">Rent</span>
-                <span class="service-tile-desc">View and pay rent</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Payment" asp-action="AddUpdate">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-droplet"></i></span>
-                <span class="service-tile-title">Water</span>
-                <span class="service-tile-desc">Water charges</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Payment" asp-action="AddUpdate">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
-                <span class="service-tile-title">Electricity</span>
-                <span class="service-tile-desc">Electricity charges</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Payment" asp-action="AddUpdate">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-recycle"></i></span>
-                <span class="service-tile-title">Refuse</span>
-                <span class="service-tile-desc">Refuse collection</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Payment" asp-action="AddUpdate">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-id-card"></i></span>
-                <span class="service-tile-title">Parking fee</span>
-                <span class="service-tile-desc">Where applicable</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Notification" asp-action="Index">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-bell"></i></span>
-                <span class="service-tile-title">Notifications</span>
-                <span class="service-tile-desc">Estate notices</span>
-            </a>
-        </div>
-        <div class="col-6 col-md-4 col-lg-3">
-            <a class="service-tile" asp-controller="Profile" asp-action="Index">
-                <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-user-shield"></i></span>
-                <span class="service-tile-title">Account</span>
-                <span class="service-tile-desc">Profile &amp; security</span>
-            </a>
-        </div>
-    </div>
-</section>
-
 @if (hasAccommodation)
 {
     <section class="content-card mb-4">
-        <div class="d-flex flex-wrap justify-content-between gap-2">
+        <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center">
             <div>
-                <h2 class="h6 fw-bold mb-1">Assigned accommodation</h2>
+                <h2 class="h6 fw-bold mb-1">Your accommodation</h2>
                 <p class="mb-0 fw-semibold">@accName</p>
                 @if (!string.IsNullOrWhiteSpace(accUnit))
                 {
                     <p class="text-muted small mb-0">Unit @accUnit</p>
                 }
             </div>
-            <a class="btn btn-outline-primary btn-sm align-self-center" asp-controller="Payment" asp-action="AddUpdate">Pay rent / utilities</a>
+            <a class="btn btn-outline-primary btn-sm" asp-controller="Accomodation" asp-action="List">View accommodation</a>
+        </div>
+    </section>
+}
+else
+{
+    <section class="content-card mb-4">
+        <div class="d-flex flex-wrap justify-content-between gap-2 align-items-center">
+            <div>
+                <h2 class="h6 fw-bold mb-1">Accommodation</h2>
+                <p class="text-muted small mb-0">No accommodation assigned yet.</p>
+            </div>
+            <a class="btn btn-outline-primary btn-sm" asp-controller="Accomodation" asp-action="List">Explore accommodation</a>
         </div>
     </section>
 }
 
 <section class="content-card">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
-        <h2 class="h5 fw-bold mb-0">Payment activity</h2>
-        <a class="btn btn-sm btn-outline-secondary" asp-controller="Payment" asp-action="MyPayments">View all</a>
+        <h2 class="h5 fw-bold mb-0">Recent payment activity</h2>
+        <a class="btn btn-sm btn-outline-secondary" asp-controller="Payment" asp-action="MyPayments">Payment history</a>
     </div>
-    <p class="text-muted small mb-3">Recent requests with status you can read — not colour alone.</p>
     @if (Model.RecentPayments.Any())
     {
         <ul class="fx-timeline">
@@ -172,7 +117,7 @@
     {
         <div class="empty-state py-4">
             No payment activity yet.
-            <a asp-controller="Payment" asp-action="AddUpdate">Make your first payment</a>.
+            <a asp-controller="Services" asp-action="Index">Explore services</a> to make a payment.
         </div>
     }
 </section>

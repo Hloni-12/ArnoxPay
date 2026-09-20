@@ -41,13 +41,19 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
         return View(await context.Payments.Where(x => x.CustomerId == c.Id).OrderByDescending(x => x.SubmittedAtUtc).AsNoTracking().ToListAsync());
     }
 
-    // ========== Customer checkout lifecycle (demo gateway) ==========
+    // ========== Customer checkout lifecycle ==========
 
     [Authorize(Roles = SystemRoles.Customer), HttpGet]
-    public IActionResult AddUpdate() => RedirectToAction(nameof(Checkout));
+    public IActionResult AddUpdate(PaymentType? type = null) => RedirectToAction(nameof(Checkout), new { type });
 
     [Authorize(Roles = SystemRoles.Customer), HttpGet]
-    public IActionResult Checkout() => View(new PaymentCreateModel());
+    public IActionResult Checkout(PaymentType? type = null)
+    {
+        var model = new PaymentCreateModel();
+        if (type.HasValue)
+            model.PaymentType = type.Value;
+        return View(model);
+    }
 
     [Authorize(Roles = SystemRoles.Customer), HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Checkout(PaymentCreateModel model)

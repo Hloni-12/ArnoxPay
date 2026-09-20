@@ -5,10 +5,6 @@
 }
 <div class="fx-pay-shell">
     <div class="content-card">
-        <div class="alert alert-warning border-0 mb-3" role="status">
-            <strong>@(gateway?.EnvironmentName ?? "DEMO PAYMENT ENVIRONMENT")</strong>
-            — Authentication has not happened yet.
-        </div>
         <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 2 · Payment details</p>
         <h1 class="page-title h3 mb-3">Payment summary</h1>
 
@@ -34,14 +30,14 @@
             <label class="form-label fw-semibold">Payment method</label>
             <div class="form-check mb-2">
                 <input class="form-check-input" type="radio" name="paymentMethod" id="m1" value="Card/Bank Payment" checked />
-                <label class="form-check-label" for="m1">Card / Bank Payment (demo)</label>
+                <label class="form-check-label" for="m1">Card / Bank Payment</label>
             </div>
             <div class="form-check mb-3">
                 <input class="form-check-input" type="radio" name="paymentMethod" id="m2" value="Campus Account" />
-                <label class="form-check-label" for="m2">Campus Account (demo)</label>
+                <label class="form-check-label" for="m2">Campus Account</label>
             </div>
             <button type="submit" class="btn btn-primary btn-lg">Continue to Verification</button>
         </form>
-        <p class="fx-secure-note mt-3 mb-0"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> No card numbers, CVVs, or bank passwords are collected.</p>
+        <p class="fx-secure-note mt-3 mb-0"><i class="fa-solid fa-shield-halved" aria-hidden="true"></i> Payment is stored in ArnoxPay and only marked paid after Financial Officer approval.</p>
     </div>
 </div>

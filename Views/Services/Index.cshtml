@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Services";
+}
+<div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+    <div>
+        <h1 class="page-title h2 mb-1">Services</h1>
+        <p class="text-muted mb-0">Select a university estate service to pay for. Payments are reviewed by a Financial Officer before they are marked as paid.</p>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-6 col-md-4 col-lg-3">
+        <a class="service-tile" asp-controller="Payment" asp-action="Checkout" asp-route-type="@PaymentType.Rent">
+            <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-house"></i></span>
+            <span class="service-tile-title">Rent</span>
+            <span class="service-tile-desc">Residence rent charges</span>
+            <span class="btn btn-sm btn-outline-primary mt-2">Pay now</span>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3">
+        <a class="service-tile" asp-controller="Payment" asp-action="Checkout" asp-route-type="@PaymentType.Water">
+            <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-droplet"></i></span>
+            <span class="service-tile-title">Water</span>
+            <span class="service-tile-desc">Water utility charges</span>
+            <span class="btn btn-sm btn-outline-primary mt-2">Pay now</span>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3">
+        <a class="service-tile" asp-controller="Payment" asp-action="Checkout" asp-route-type="@PaymentType.Electricity">
+            <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-bolt"></i></span>
+            <span class="service-tile-title">Electricity</span>
+            <span class="service-tile-desc">Electricity charges</span>
+            <span class="btn btn-sm btn-outline-primary mt-2">Pay now</span>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3">
+        <a class="service-tile" asp-controller="Payment" asp-action="Checkout" asp-route-type="@PaymentType.RefuseCollection">
+            <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-recycle"></i></span>
+            <span class="service-tile-title">Refuse</span>
+            <span class="service-tile-desc">Refuse collection</span>
+            <span class="btn btn-sm btn-outline-primary mt-2">Pay now</span>
+        </a>
+    </div>
+    <div class="col-6 col-md-4 col-lg-3">
+        <a class="service-tile" asp-controller="Payment" asp-action="Checkout" asp-route-type="@PaymentType.Parking">
+            <span class="service-tile-icon" aria-hidden="true"><i class="fa-solid fa-id-card"></i></span>
+            <span class="service-tile-title">Parking fee</span>
+            <span class="service-tile-desc">Where applicable</span>
+            <span class="btn btn-sm btn-outline-primary mt-2">Pay now</span>
+        </a>
+    </div>
+</div>
