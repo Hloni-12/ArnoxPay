@@ -55,7 +55,7 @@
             <span asp-validation-for="Surname" class="text-danger small"></span>
         </div>
 
-        @* ---- Email (any valid email) ---- *@
+        @* ---- Email (UFS staff email or personal email allowed) ---- *@
         <div class="mb-3">
             <label asp-for="Email" class="form-label"></label>
             <input asp-for="Email" class="form-control" autocomplete="email" />
@@ -87,8 +87,12 @@
   function sync() {
     var staff = document.getElementById('typeStaff');
     var label = document.getElementById('numberLabel');
+    var help = document.getElementById('numberHelp');
     if (label) {
       label.textContent = (staff && staff.checked) ? 'Staff Number' : 'Student Number';
+    }
+    if (help) {
+      help.style.display = (staff && staff.checked) ? 'block' : 'none';
     }
     document.querySelectorAll('.account-type-card').forEach(function (card) {
       var input = card.querySelector('.account-type-input');

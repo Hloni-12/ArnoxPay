@@ -4,6 +4,12 @@
 }
 <div class="fx-pay-shell">
     <div class="content-card">
+        @if (TempData["SecondCarPermit"] as string == "true" || (!string.IsNullOrEmpty(Model?.Notes) && Model.Notes.Contains("Second-car")))
+        {
+            <div class="alert alert-info border-0 mb-4" role="status">
+                <strong>Second-car parking permit</strong> — Complete this Parking payment for your second registered vehicle.
+            </div>
+        }
         <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 1 · Service selection</p>
         <h1 class="page-title h3 mb-1">What are you paying for?</h1>
         <p class="text-muted mb-4">Choose a service and amount. Your payment is saved to ArnoxPay and will require Financial Officer review before it is marked as paid.</p>

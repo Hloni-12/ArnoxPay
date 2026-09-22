@@ -34,7 +34,7 @@ public class VehicleController(AppDbContext context, UserManager<AppUser> userMa
         u
         ? $"{u.FirstName} {u.LastName}" : "Customer";
         ViewBag.VehicleCount = vehicles.Count;
-        ViewBag.ExtraCount = Math.Max(0, vehicles.Count - 2);
+        ViewBag.ExtraCount = Math.Max(0, vehicles.Count - 1);
         return View(vehicles);
     }
 
@@ -59,6 +59,8 @@ public class VehicleController(AppDbContext context, UserManager<AppUser> userMa
             return RedirectToAction(nameof(Index));
         }
 
+        var existingCount = await context.Vehicles.CountAsync(x => x.CustomerId == customer.Id && x.IsActive);
+
         context.Vehicles.Add(new Vehicle
         {
             CustomerId = customer.Id,
@@ -68,16 +70,19 @@ public class VehicleController(AppDbContext context, UserManager<AppUser> userMa
             Colour = colour?.Trim(),
             RegisteredAtUtc = DateTime.UtcNow,
             IsActive = true
-        }
-        );
+        });
         await context.SaveChangesAsync();
 
-        var count = await context.Vehicles.CountAsync(x => x.CustomerId == customer.Id && x.IsActive);
-        if (count > 2)
-        TempData["Success"] = "Vehicle registered. This is vehicle #" + count + " — please submit a Parking payment for the extra vehicle.";
-        else
-        TempData["Success"] = "Vehicle registered successfully.";
+        // First vehicle: existing parking rules (included). Second vehicle: requires second-car parking permit payment.
+        if (existingCount >= 1)
+        {
+            TempData["Success"] = "Second vehicle registered (" + registrationNumber + "). Please complete payment for the second-car parking permit.";
+            TempData["SecondCarPermit"] = "true";
+            TempData["SecondCarReg"] = registrationNumber;
+            return RedirectToAction("Checkout", "Payment", new { type = PaymentType.Parking });
+        }
 
+        TempData["Success"] = "Vehicle registered successfully.";
         return RedirectToAction(nameof(Index));
     }
 

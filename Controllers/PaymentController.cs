@@ -52,6 +52,15 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
         var model = new PaymentCreateModel();
         if (type.HasValue)
             model.PaymentType = type.Value;
+        // Prefill when redirected after registering a second vehicle (second-car parking permit)
+        if (TempData["SecondCarPermit"] as string == "true")
+        {
+            model.PaymentType = PaymentType.Parking;
+            model.Notes = "Second-car parking permit" + (TempData["SecondCarReg"] is string reg ? $" for {reg}" : "");
+            if (TempData["Success"] != null)
+                TempData.Keep("Success");
+            TempData.Keep("SecondCarPermit");
+        }
         return View(model);
     }
 

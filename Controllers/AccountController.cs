@@ -93,6 +93,17 @@ public class AccountController(
         if (!string.IsNullOrWhiteSpace(model.UserNumber))
         {
             var number = model.UserNumber.Trim();
+
+            // Staff Number: exactly 7 numerical digits starting with 0 (e.g. 0123456)
+            if (model.Category == CustomerCategory.Staff)
+            {
+                if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^0\d{6}$"))
+                {
+                    ModelState.AddModelError(nameof(model.UserNumber),
+                        "Staff Number must be exactly 7 numerical digits and must start with 0 (e.g. 0123456). Letters, spaces, special characters, or a different length are not accepted.");
+                }
+            }
+
             var existsNumber = await context.Customers.AnyAsync(c => c.UserNumber == number);
             if (existsNumber)
                 ModelState.AddModelError(nameof(model.UserNumber), $"This {numberLabel} is already registered.");
@@ -104,7 +115,9 @@ public class AccountController(
 
         if (!string.IsNullOrWhiteSpace(model.Email))
         {
-            var existsEmail = await userManager.FindByEmailAsync(model.Email.Trim());
+            var eMail = model.Email.Trim();
+            // Allow any valid email (UFS staff email e.g. sefakoinitials@ufs.ac.za or personal email). Do not force @ufs.ac.za for customer staff registration.
+            var existsEmail = await userManager.FindByEmailAsync(eMail);
             if (existsEmail is not null)
                 ModelState.AddModelError(nameof(model.Email), "This email address is already registered.");
         }
