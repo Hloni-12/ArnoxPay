@@ -94,13 +94,21 @@ public class AccountController(
         {
             var number = model.UserNumber.Trim();
 
-            // Staff Number: exactly 7 numerical digits starting with 0 (e.g. 0123456)
             if (model.Category == CustomerCategory.Staff)
             {
+                // Staff Number: exactly 7 digits, must start with 0 (e.g. 0123456) — strict
                 if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^0\d{6}$"))
                 {
                     ModelState.AddModelError(nameof(model.UserNumber),
-                        "Staff Number must be exactly 7 numerical digits and must start with 0 (e.g. 0123456). Letters, spaces, special characters, or a different length are not accepted.");
+                        "Staff Number must be exactly 7 digits and start with 0 (e.g. 0123456).");
+                }
+            }
+            else if (model.Category == CustomerCategory.Student)
+            {
+                // Student Number: numeric only
+                if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^\d+$"))
+                {
+                    ModelState.AddModelError(nameof(model.UserNumber), "Student Number must be numeric.");
                 }
             }
 
@@ -115,13 +123,42 @@ public class AccountController(
 
         if (!string.IsNullOrWhiteSpace(model.Email))
         {
-            var eMail = model.Email.Trim();
-            // Allow any valid email (UFS staff email e.g. sefakoinitials@ufs.ac.za or personal email). Do not force @ufs.ac.za for customer staff registration.
-            var existsEmail = await userManager.FindByEmailAsync(eMail);
+            var email = model.Email.Trim();
+
+            if (model.Category == CustomerCategory.Staff)
+            {
+                // Staff email: letters only before @, must end exactly with @ufs.ac.za
+                // Examples: sefakol@ufs.ac.za, sefakoLP@ufs.ac.za
+                if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[A-Za-z]+@ufs\.ac\.za$"))
+                {
+                    ModelState.AddModelError(
+                        nameof(model.Email),
+                        "Incorrect Email");
+                }
+            }
+            else if (model.Category == CustomerCategory.Student)
+            {
+                // Student email: digits only before @, must end exactly with @ufs4life.ac.za
+                if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^\d+@ufs4life\.ac\.za$"))
+                {
+                    ModelState.AddModelError(
+                        nameof(model.Email),
+                        "Incorrect Email");
+                }
+            }
+
+            var existsEmail = await userManager.FindByEmailAsync(email);
             if (existsEmail is not null)
-                ModelState.AddModelError(nameof(model.Email), "This email address is already registered.");
+            {
+                ModelState.AddModelError(
+                    nameof(model.Email),
+                    "This email address is already registered.");
+            }
         }
 
+        // IMPORTANT: re-check ModelState after all custom validation above.
+        // Without this, errors added by AddModelError were being ignored and
+        // the account was created anyway (this was the bug).
         if (!ModelState.IsValid) return View(model);
 
         var firstName = model.Name.Trim();
@@ -129,12 +166,12 @@ public class AccountController(
         var fullName = $"{firstName} {lastName}".Trim();
 
         var userNumber = model.UserNumber.Trim();
-        var email = model.Email.Trim();
+        var registeredEmail = model.Email.Trim();
 
         var user = new AppUser
         {
             UserName = userNumber, // login with User Number
-            Email = email,
+            Email = registeredEmail,
             FirstName = firstName,
             LastName = lastName,
             EmailConfirmed = false
