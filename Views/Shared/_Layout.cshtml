@@ -18,56 +18,59 @@
             <div class="container-fluid">
                 <a class="navbar-brand brand-lockup" asp-controller="Home" asp-action="Index">
                     <svg class="brand-icon" width="40" height="40" viewBox="0 0 64 64" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="apNavFill" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#4f46e5"/>
-      <stop offset="100%" stop-color="#7c3aed"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="16" fill="url(#apNavFill)"/>
-  <path d="M32 12 L18 18 V32.5 C18 42 24.5 49.5 32 52.5 C39.5 49.5 46 42 46 32.5 V18 Z" fill="#fff" opacity="0.95"/>
-  <path d="M24.5 32.5 L29.5 37.5 L40 25" fill="none" stroke="#4f46e5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+                        <defs>
+                            <linearGradient id="apNavFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#4f46e5" />
+                                <stop offset="100%" stop-color="#7c3aed" />
+                            </linearGradient>
+                        </defs>
+                        <rect width="64" height="64" rx="16" fill="url(#apNavFill)" />
+                        <path d="M32 12 L18 18 V32.5 C18 42 24.5 49.5 32 52.5 C39.5 49.5 46 42 46 32.5 V18 Z" fill="#fff" opacity="0.95" />
+                        <path d="M24.5 32.5 L29.5 37.5 L40 25" fill="none" stroke="#4f46e5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
                     <span class="brand-text-wrap">
                         <span class="brand-name">Arnox<span class="brand-pay">Pay</span></span>
                         <span class="brand-slogan d-none d-md-inline">Secure Payments. Smarter Services.</span>
                     </span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
+                        aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="mainNav">
-                                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             @if (User.IsInRole(SystemRoles.Administrator))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="AdminHome" asp-action="Index">Dashboard</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="AdminCustomer" asp-action="List">Customers</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="AdminFinancialOfficer" asp-action="List">Financial Officers</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="AdminAccomodation" asp-action="List">Accommodation</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Index">Payments</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="AdminAccomodation" asp-action="AssignmentRequests">Residence requests</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="AdminAccomodation" asp-action="Issues">Accommodation issues</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="AdminParking" asp-action="Permits">Permits</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Transaction" asp-action="Index">Transactions</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="AdminReport" asp-action="Index">Reports</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Profile" asp-action="Index">Profile</a></li>
                             }
                             else if (User.IsInRole(SystemRoles.FinancialOfficer))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Dashboard">Dashboard</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Customers">Customers</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Index">Payments</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Transaction" asp-action="Index">Transactions</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="AdminReport" asp-action="Index">Reports</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Reviews" asp-action="Index">Reviews</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Profile" asp-action="Index">Profile</a></li>
                             }
                             else if (User.IsInRole(SystemRoles.Customer))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Customer" asp-action="Index">Dashboard</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Services" asp-action="Index">Services</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Accomodation" asp-action="List">Accommodation</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Checkout">Payments</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Vehicle" asp-action="Index">Vehicles</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Customer" asp-action="Permit">Permits</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="MyPayments">Payment History</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Notification" asp-action="Index">Notifications</a></li>
-                                <li class="nav-item"><a class="nav-link" asp-controller="Profile" asp-action="Index">Profile</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="Customer" asp-action="Reviews">Reviews</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="AccommodationIssue" asp-action="Index">Report issue</a></li>
                             }
                         }
                         else
@@ -125,13 +128,19 @@
             @if (TempData["Success"] is string successFull)
             {
                 <div class="container-wide pt-3">
-                    <div class="alert alert-success alert-dismissible fade show">@successFull<button class="btn-close" type="button" data-bs-dismiss="alert"></button></div>
+                    <div class="alert alert-success alert-dismissible fade show">
+                        @successFull
+                        <button class="btn-close" type="button" data-bs-dismiss="alert"></button>
+                    </div>
                 </div>
             }
             @if (TempData["Error"] is string errorFull)
             {
                 <div class="container-wide pt-3">
-                    <div class="alert alert-danger alert-dismissible fade show">@errorFull<button class="btn-close" type="button" data-bs-dismiss="alert"></button></div>
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        @errorFull
+                        <button class="btn-close" type="button" data-bs-dismiss="alert"></button>
+                    </div>
                 </div>
             }
             @RenderBody()
@@ -141,11 +150,17 @@
             <div class="page-container">
                 @if (TempData["Success"] is string success)
                 {
-                    <div class="alert alert-success alert-dismissible fade show">@success<button class="btn-close" type="button" data-bs-dismiss="alert"></button></div>
+                    <div class="alert alert-success alert-dismissible fade show">
+                        @success
+                        <button class="btn-close" type="button" data-bs-dismiss="alert"></button>
+                    </div>
                 }
                 @if (TempData["Error"] is string error)
                 {
-                    <div class="alert alert-danger alert-dismissible fade show">@error<button class="btn-close" type="button" data-bs-dismiss="alert"></button></div>
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        @error
+                        <button class="btn-close" type="button" data-bs-dismiss="alert"></button>
+                    </div>
                 }
                 @RenderBody()
             </div>
@@ -155,23 +170,22 @@
     <footer class="site-footer">
         <div class="container site-footer-main">
             <div class="row g-4 g-lg-4 footer-grid">
-                <!-- ArnoxPay -->
                 <section class="col-12 col-md-6 col-lg-3 footer-col footer-col-brand" aria-labelledby="footer-about-heading">
                     <div class="footer-brand-row">
                         <svg class="brand-icon" width="36" height="36" viewBox="0 0 64 64" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg">
-                          <defs>
-                            <linearGradient id="apFootFill" x1="0%" y1="0%" x2="100%" y2="100%">
-                              <stop offset="0%" stop-color="#4f46e5"/>
-                              <stop offset="100%" stop-color="#7c3aed"/>
-                            </linearGradient>
-                          </defs>
-                          <rect width="64" height="64" rx="16" fill="url(#apFootFill)"/>
-                          <path d="M32 12 L18 18 V32.5 C18 42 24.5 49.5 32 52.5 C39.5 49.5 46 42 46 32.5 V18 Z" fill="#fff" opacity="0.95"/>
-                          <path d="M24.5 32.5 L29.5 37.5 L40 25" fill="none" stroke="#4f46e5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <defs>
+                                <linearGradient id="apFootFill" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#4f46e5" />
+                                    <stop offset="100%" stop-color="#7c3aed" />
+                                </linearGradient>
+                            </defs>
+                            <rect width="64" height="64" rx="16" fill="url(#apFootFill)" />
+                            <path d="M32 12 L18 18 V32.5 C18 42 24.5 49.5 32 52.5 C39.5 49.5 46 42 46 32.5 V18 Z" fill="#fff" opacity="0.95" />
+                            <path d="M24.5 32.5 L29.5 37.5 L40 25" fill="none" stroke="#4f46e5" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         <div>
-                          <h2 id="footer-about-heading" class="footer-heading mb-0">ArnoxPay</h2>
-                          <p class="footer-slogan mb-0">Secure Payments. Smarter Services.</p>
+                            <h2 id="footer-about-heading" class="footer-heading mb-0">ArnoxPay</h2>
+                            <p class="footer-slogan mb-0">Secure Payments. Smarter Services.</p>
                         </div>
                     </div>
                     <p class="footer-about mt-3 mb-0">
@@ -179,9 +193,7 @@
                     </p>
                 </section>
 
-                <!-- Quick Links -->
                 <section class="col-12 col-md-6 col-lg-3 footer-col" aria-labelledby="footer-nav-heading">
-                    <h2 id="footer-nav-heading" class="footer-heading">Quick Links</h2>
                     <nav aria-label="Footer navigation">
                         <ul class="footer-links">
                             <li><a asp-controller="Home" asp-action="Index">Home</a></li>
@@ -192,21 +204,22 @@
                                     <li><a asp-controller="AdminHome" asp-action="Index">Dashboard</a></li>
                                     <li><a asp-controller="AdminCustomer" asp-action="List">Customers</a></li>
                                     <li><a asp-controller="Payment" asp-action="Index">Payments</a></li>
-                                    <li><a asp-controller="Profile" asp-action="Index">Profile</a></li>
-                                }
+                                    <li><a asp-controller="AdminParking" asp-action="Index">Parking</a></li>                                }
                                 else if (User.IsInRole(SystemRoles.FinancialOfficer))
                                 {
                                     <li><a asp-controller="Payment" asp-action="Dashboard">Dashboard</a></li>
-                                    <li><a asp-controller="Payment" asp-action="Customers">Customers</a></li>
                                     <li><a asp-controller="Payment" asp-action="Index">Payments</a></li>
-                                    <li><a asp-controller="Profile" asp-action="Index">Profile</a></li>
+                                    <li><a asp-controller="Transaction" asp-action="Index">Transactions</a></li>
+                                    <li><a asp-controller="Reviews" asp-action="Index">Reviews</a></li>
                                 }
                                 else if (User.IsInRole(SystemRoles.Customer))
                                 {
                                     <li><a asp-controller="Customer" asp-action="Index">Dashboard</a></li>
-                                    <li><a asp-controller="Profile" asp-action="Index">Profile</a></li>
-                                    <li><a asp-controller="Payment" asp-action="MyPayments">Payments</a></li>
-                                    <li><a asp-controller="Notification" asp-action="Index">Notifications</a></li>
+                                    <li><a asp-controller="Services" asp-action="Index">Services</a></li>
+                                    <li><a asp-controller="Vehicle" asp-action="Index">Vehicles</a></li>
+                                    <li><a asp-controller="Customer" asp-action="Permit">Permits</a></li>
+                                    <li><a asp-controller="Customer" asp-action="Reviews">Reviews</a></li>
+                                    <li><a asp-controller="AccommodationIssue" asp-action="Index">Report issue</a></li>
                                 }
                             }
                             else
@@ -218,23 +231,21 @@
                     </nav>
                 </section>
 
-                <!-- Services -->
                 <section class="col-12 col-md-6 col-lg-3 footer-col" aria-labelledby="footer-services-heading">
                     <h2 id="footer-services-heading" class="footer-heading">Services</h2>
                     <ul class="footer-links">
                         <li><a asp-controller="Services" asp-action="Index">Rent &amp; utilities</a></li>
                         <li><a asp-controller="Services" asp-action="Index">Online payments</a></li>
                         <li><a asp-controller="Accomodation" asp-action="List">Accommodation</a></li>
-                        <li><a asp-controller="Payment" asp-action="Checkout" asp-route-type="Parking">Parking fees</a></li>
+                        <li><a asp-controller="Services" asp-action="Index">Parking fees</a></li>
                     </ul>
                 </section>
 
-                <!-- Contact Us -->
                 <section class="col-12 col-md-6 col-lg-3 footer-col" aria-labelledby="footer-contact-heading">
                     <h2 id="footer-contact-heading" class="footer-heading">Contact Us</h2>
                     <ul class="footer-links">
                         <li><a asp-controller="Home" asp-action="Index" asp-fragment="support">Help &amp; Support</a></li>
-                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="contact">Contact</a></li>
+                        <li><a asp-controller="Home" asp-action="Index" asp-fragment="contact">Contact: +27 63 138 8370</a></li>
                         <li><a asp-controller="Home" asp-action="Privacy">Privacy Policy</a></li>
                         <li><a asp-controller="Home" asp-action="Terms">Terms &amp; Conditions</a></li>
                     </ul>

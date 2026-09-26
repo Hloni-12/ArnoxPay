@@ -3,15 +3,23 @@
 <div class="section-header">
     <div>
         <h1 class="page-title h2 mb-0">Permit applications</h1>
-        <p class="text-muted mb-0">Approve or reject customer applications. Updates <code>ParkingPermits</code> in SQL Server.</p>
+        <p class="text-muted mb-0">Approve or reject customer applications. Updates <code>ParkingPermits</code></p>
     </div>
-    <a class="btn btn-outline-secondary" asp-action="Index">Back to parking</a>
 </div>
 <section class="content-card">
 @if (Model.Any())
 {
     <table class="table table-hover mb-0">
-        <thead><tr><th>Permit #</th><th>Customer</th><th>Vehicle</th><th>Applied</th><th>Status</th><th></th></tr></thead>
+        <thead>
+            <tr>
+                <th>Permit #</th>
+                <th>Customer</th>
+                <th>Vehicle</th>
+                <th>Applied</th>
+                <th>Status</th>
+                <th></th>
+            </tr>
+        </thead>
         <tbody>
         @foreach (var p in Model)
         {
