@@ -1,2 +1,38 @@
 @model FinancialOfficerCreateModel
-@{ ViewData["Title"] = "Financial officer"; }<div class="content-card mx-auto" style="max-width:760px"><h1 class="page-title h3">Add financial officer</h1><p class="text-muted">This account is authorized once it has been created.</p><form method="post" class="row g-3"><div asp-validation-summary="ModelOnly" class="text-danger col-12"></div><div class="col-md-6"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control"/></div><div class="col-md-6"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control"/></div><div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control"/></div><div class="col-md-6"><label asp-for="PhoneNumber" class="form-label"></label><input asp-for="PhoneNumber" class="form-control"/></div><div class="col-md-6"><label asp-for="EmployeeNumber" class="form-label"></label><input asp-for="EmployeeNumber" class="form-control"/></div><div class="col-md-6"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control"/></div><div class="col-12"><button class="btn btn-primary">Create and authorize</button><a class="btn btn-outline-secondary ms-2" asp-action="List">Cancel</a></div></form></div>
+@{
+	ViewData["Title"] = "Financial officer";
+}
+<div class="content-card mx-auto" style="max-width:760px">
+	<h1 class="page-title h3">Add financial officer</h1>
+	<p class="text-muted">This account is authorized once it has been created.</p>
+	<form method="post" class="row g-3">
+		<div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+		<div class="col-md-6"><label asp-for="FirstName" class="form-label"></label>
+			<input asp-for="FirstName" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="LastName" class="form-label"></label>
+			<input asp-for="LastName" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="Email" class="form-label"></label>
+			<input asp-for="Email" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="PhoneNumber" class="form-label"></label>
+			<input asp-for="PhoneNumber" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="EmployeeNumber" class="form-label"></label>
+			<input asp-for="EmployeeNumber" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="Password" class="form-label"></label>
+			<input asp-for="Password" class="form-control"/>
+		</div>
+		<div class="col-12">
+			<button class="btn btn-primary">Create and authorize</button>
+			<a class="btn btn-outline-secondary ms-2" asp-action="List">Cancel</a>
+		</div>
+	</form>
+</div>

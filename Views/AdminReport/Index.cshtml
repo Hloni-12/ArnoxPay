@@ -1,2 +1,47 @@
 @model List<Payment>
-@{ ViewData["Title"] = "Payment reports"; var total = Model.Where(x => x.Status == PaymentStatus.Accepted).Sum(x => x.Amount); }<div class="d-flex justify-content-between align-items-end mb-4"><div><h1 class="page-title h2 mb-1">Payment reports</h1><p class="text-muted mb-0">All payment requests, decisions, and transactions.</p></div><div class="h3 text-primary mb-0">@total.ToString("C")</div></div><section class="content-card p-0 overflow-hidden">@if(Model.Any()){<div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>ID</th><th>Customer</th><th>Service</th><th>Amount</th><th>Status</th><th>Officer</th><th>Transaction</th></tr></thead><tbody>@foreach(var p in Model){<tr><td>#@p.Id</td><td>@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName</td><td>@p.PaymentType</td><td>@p.Amount.ToString("C")</td><td><partial name="_StatusBadge" model="@p.Status.ToString()"/></td><td>@p.FinancialOfficer?.AppUser?.FirstName @p.FinancialOfficer?.AppUser?.LastName</td><td>@p.Transaction?.TransactionReference</td></tr>}</tbody></table></div>}else{<div class="empty-state">No payment records available.</div>}</section>
+@{
+ ViewData["Title"] = "Payment reports"; 
+ var total = Model.Where(x => x.Status == PaymentStatus.Accepted).Sum(x => x.Amount); 
+ }
+ 
+ <div class="d-flex justify-content-between align-items-end mb-4">
+	 <div>
+		 <h1 class="page-title h2 mb-1">Payment reports</h1>
+		 <p class="text-muted mb-0">All payment requests, decisions, and transactions.</p>
+	 </div>
+	 <div class="h3 text-primary mb-0">@total.ToString("C")</div>
+</div>
+	 <section class="content-card p-0 overflow-hidden">@if(Model.Any())
+		 {
+			 <div class="table-responsive">
+				 <table class="table table-hover mb-0">
+					 <thead>
+						 <tr>
+							 <th>ID</th>
+							 <th>Customer</th>
+							 <th>Service</th>
+							 <th>Amount</th>
+							 <th>Status</th>
+							 <th>Officer</th>
+							 <th>Transaction</th>
+						 </tr>
+					</thead>
+					<tbody>@foreach(var p in Model)
+						{
+							<tr>
+								<td>#@p.Id</td>
+								<td>@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName</td>
+								<td>@p.PaymentType</td>
+								<td>@p.Amount.ToString("C")</td>
+								<td><partial name="_StatusBadge" model="@p.Status.ToString()"/></td>
+								<td>@p.FinancialOfficer?.AppUser?.FirstName @p.FinancialOfficer?.AppUser?.LastName</td>
+								<td>@p.Transaction?.TransactionReference</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		} else {
+			<div class="empty-state">No payment records available.</div>
+		}
+	</section>

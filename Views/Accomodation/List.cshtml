@@ -1,4 +1,61 @@
 @model List<AccommodationDetailsViewModel>
-@{ ViewData["Title"] = "Accomodations"; }
-<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4"><div><p class="text-primary small fw-semibold mb-1">Residence options</p><h1 class="page-title h2 mb-1">Explore accomodations</h1><p class="text-muted mb-0">Browse available townhouses and flats, view pictures, and submit one residence request.</p></div><a class="btn btn-outline-primary" asp-action="MyRequests">My residence requests</a></div>
-@if(Model.Any()){<div class="row g-4">@foreach(var item in Model){var image=item.Accomodation.Images.OrderByDescending(x=>x.IsPrimary).FirstOrDefault(); var full=item.OccupiedPlaces>=item.Accomodation.Capacity;<div class="col-md-6 col-xl-4"><article class="accommodation-card h-100">@if(image is not null){<img src="@image.ImagePath" alt="@item.Accomodation.Name" class="accommodation-image"/>}else{<div class="accommodation-image accommodation-placeholder">No image available</div>}<div class="p-4"><div class="d-flex justify-content-between align-items-start gap-2"><h2 class="h5 mb-1">@item.Accomodation.Name</h2><span class="badge text-bg-light">@item.Accomodation.AccommodationType</span></div><p class="small text-muted mb-2">Unit @item.Accomodation.UnitNumber · @item.Accomodation.Address</p><p class="text-muted small">@(string.IsNullOrWhiteSpace(item.Accomodation.Description) ? "Residence details will be provided by the estate office." : item.Accomodation.Description)</p><div class="small mb-3"><strong>@item.OccupiedPlaces / @item.Accomodation.Capacity</strong> places occupied</div><div class="d-flex gap-2"><a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@item.Accomodation.Id">View details</a>@if(item.IsCurrentResident){<span class="badge text-bg-success align-self-center">Your residence</span>}else if(item.HasPendingRequest){<span class="badge text-bg-warning align-self-center">Request pending</span>}else if(full){<span class="badge text-bg-secondary align-self-center">Currently full</span>}</div></div></article></div>}</div>}else{<div class="empty-state content-card">No active accomodations have been published yet.</div>}
+@{ 
+	ViewData["Title"] = "Accomodations"; 
+}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-end gap-3 mb-4">
+	<div>
+		<p class="text-primary small fw-semibold mb-1">Residence options</p>
+		<h1 class="page-title h2 mb-1">Explore accomodations</h1>
+		<p class="text-muted mb-0">Browse available townhouses and flats, view pictures, and submit one residence request.</p>
+	</div>
+	<a class="btn btn-outline-primary" asp-action="MyRequests">My residence requests</a>
+</div>
+@if(Model.Any())
+{
+	<div class="row g-4">
+		@foreach(var item in Model)
+		{
+			var image=item.Accomodation.Images.OrderByDescending(x=>x.IsPrimary).FirstOrDefault(); 
+			var full=item.OccupiedPlaces>=item.Accomodation.Capacity;
+			<div class="col-md-6 col-xl-4"><article class="accommodation-card h-100">
+				@if(image is not null)
+				{
+					<img src="@image.ImagePath" alt="@item.Accomodation.Name" class="accommodation-image"/>
+				}
+				else
+				{
+					<div class="accommodation-image accommodation-placeholder">No image available</div>
+				}
+			   <div class="p-4">
+			      <div class="d-flex justify-content-between align-items-start gap-2">
+				      <h2 class="h5 mb-1">@item.Accomodation.Name</h2>
+				      <span class="badge text-bg-light">@item.Accomodation.AccommodationType</span>
+			      </div>
+						<p class="small text-muted mb-2">Unit @item.Accomodation.UnitNumber · @item.Accomodation.Address</p>
+						<p class="text-muted small">@(string.IsNullOrWhiteSpace(item.Accomodation.Description) ? "Residence details will be provided by the estate office." : item.Accomodation.Description)</p>	
+				  <div class="small mb-3">
+						<strong>@item.OccupiedPlaces / @item.Accomodation.Capacity</strong> places occupied
+				  </div>
+				  <div class="d-flex gap-2"><a class="btn btn-outline-primary btn-sm" asp-action="Details" asp-route-id="@item.Accomodation.Id">View details</a>
+					 @if(item.IsCurrentResident)
+					 { 
+						<span class="badge text-bg-success align-self-center">Your residence</span>
+					 }
+					 else if(item.HasPendingRequest)
+					 {
+						<span class="badge text-bg-warning align-self-center">Request pending</span>
+					 }else if(full)
+					 {
+						 <span class="badge text-bg-secondary align-self-center">Currently full</span>
+					 }
+				  </div>
+				</div>
+			</article>
+		</div>
+	}</div>
+}
+		
+else
+{
+	<div class="empty-state content-card">No active accomodations have been published yet.</div>
+}

@@ -1,2 +1,34 @@
 @model AdministratorSetupModel
-@{ ViewData["Title"] = "Initial administrator setup"; }<div class="auth-card mx-auto" style="max-width:760px"><h1 class="page-title h3">Initial administrator setup</h1><p class="text-muted">This creates the required role names and the first administrator. No business records are seeded.</p><form method="post" class="row g-3"><div asp-validation-summary="ModelOnly" class="text-danger col-12"></div><div class="col-md-6"><label asp-for="FirstName" class="form-label"></label><input asp-for="FirstName" class="form-control"/></div><div class="col-md-6"><label asp-for="LastName" class="form-label"></label><input asp-for="LastName" class="form-control"/></div><div class="col-md-6"><label asp-for="Email" class="form-label"></label><input asp-for="Email" class="form-control"/></div><div class="col-md-6"><label asp-for="PhoneNumber" class="form-label"></label><input asp-for="PhoneNumber" class="form-control"/></div><div class="col-12"><label asp-for="Password" class="form-label"></label><input asp-for="Password" class="form-control"/></div><div class="col-12"><button class="btn btn-primary">Create administrator</button></div></form></div>
+@{
+	ViewData["Title"] = "Initial administrator setup";
+}
+<div class="auth-card mx-auto" style="max-width:760px">
+	<h1 class="page-title h3">Initial administrator setup</h1>
+	<p class="text-muted">This creates the required role names and the first administrator. No business records are seeded.</p>
+	<form method="post" class="row g-3">
+		<div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+		<div class="col-md-6">
+			<label asp-for="FirstName" class="form-label"></label>
+			<input asp-for="FirstName" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="LastName" class="form-label"></label>
+			<input asp-for="LastName" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="Email" class="form-label"></label>
+			<input asp-for="Email" class="form-control"/>
+		</div>
+		<div class="col-md-6">
+			<label asp-for="PhoneNumber" class="form-label"></label>
+			<input asp-for="PhoneNumber" class="form-control"/>
+		</div>
+		<div class="col-12">
+			<label asp-for="Password" class="form-label"></label>
+			<input asp-for="Password" class="form-control"/>
+		</div>
+		<div class="col-12">
+			<button class="btn btn-primary">Create administrator</button>
+		</div>
+	</form>
+</div>

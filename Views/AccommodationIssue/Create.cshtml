@@ -1,3 +1,30 @@
 @model AccommodationIssueCreateModel
-@{ ViewData["Title"] = "Report accommodation issue"; }
-<div class="content-card mx-auto" style="max-width:760px"><h1 class="page-title h3">Report an accommodation issue</h1><p class="text-muted">Give the estate administrator enough detail to investigate the problem in your current accommodation.</p><form method="post" class="row g-3"><input asp-for="AccomodationId" type="hidden"/><div asp-validation-summary="ModelOnly" class="text-danger col-12"></div><div class="col-md-5"><label asp-for="Category" class="form-label"></label><select asp-for="Category" asp-items="Html.GetEnumSelectList<AccommodationIssueCategory>()" class="form-select"></select></div><div class="col-md-7"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" placeholder="Example: Bathroom tap leaking"/></div><div class="col-12"><label asp-for="Description" class="form-label"></label><textarea asp-for="Description" rows="6" class="form-control" placeholder="Describe the location, when the issue began, and any safety concern."></textarea><span asp-validation-for="Description" class="text-danger small"></span></div><div class="col-12"><button class="btn btn-primary">Submit issue report</button><a class="btn btn-outline-secondary ms-2" asp-action="Index">Cancel</a></div></form></div>
+@{
+	ViewData["Title"] = "Report accommodation issue"; 
+ }
+
+<div class="content-card mx-auto" style="max-width:760px">
+	<h1 class="page-title h3">Report an accommodation issue</h1>
+	<p class="text-muted">Give the estate administrator enough detail to investigate the problem in your current accommodation.</p>
+	<form method="post" class="row g-3">
+		<input asp-for="AccomodationId" type="hidden"/>
+		<div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
+		<div class="col-md-5">
+			<label asp-for="Category" class="form-label"></label>
+			<select asp-for="Category" asp-items="Html.GetEnumSelectList<AccommodationIssueCategory>()" class="form-select"></select>
+		</div>
+		<div class="col-md-7">
+			<label asp-for="Title" class="form-label"></label>
+			<input asp-for="Title" class="form-control" placeholder="Example: Bathroom tap leaking"/>
+		</div>
+		<div class="col-12">
+			<label asp-for="Description" class="form-label"></label>
+			<textarea asp-for="Description" rows="6" class="form-control" placeholder="Describe the location, when the issue began, and any safety concern.">
+			</textarea><span asp-validation-for="Description" class="text-danger small"></span>
+		</div>
+		<div class="col-12">
+			<button class="btn btn-primary">Submit issue report</button>
+			<a class="btn btn-outline-secondary ms-2" asp-action="Index">Cancel</a>
+		</div>
+	</form>
+</div>

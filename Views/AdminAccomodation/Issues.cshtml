@@ -1,3 +1,42 @@
 @model List<AccommodationIssue>
-@{ ViewData["Title"] = "Accommodation issues"; }
-<div class="mb-4"><h1 class="page-title h2 mb-1">Accommodation issues</h1><p class="text-muted mb-0">Review and update problems reported by residents.</p></div><section class="content-card p-0 overflow-hidden">@if(Model.Any()){<div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Resident</th><th>Accomodation</th><th>Issue</th><th>Category</th><th>Status</th><th class="text-end">Action</th></tr></thead><tbody>@foreach(var issue in Model){<tr><td>@issue.Customer?.AppUser?.FirstName @issue.Customer?.AppUser?.LastName</td><td>@issue.Accomodation?.Name</td><td><strong>@issue.Title</strong><br/><small>@issue.Description</small></td><td>@issue.Category</td><td><partial name="_StatusBadge" model="@issue.Status.ToString()"/></td><td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="UpdateIssue" asp-route-id="@issue.Id">Update</a></td></tr>}</tbody></table></div>}else{<div class="empty-state">No accommodation issues have been reported.</div>}</section>
+@{ 
+	ViewData["Title"] = "Accommodation issues";
+}
+<div class="mb-4">
+	<h1 class="page-title h2 mb-1">Accommodation issues</h1>
+	<p class="text-muted mb-0">Review and update problems reported by residents.</p>
+</div>
+<section class="content-card p-0 overflow-hidden">@if(Model.Any())
+	{
+		<div class="table-responsive">
+			<table class="table table-hover mb-0">
+				<thead>
+					<tr>
+						<th>Resident</th>
+						<th>Accomodation</th>
+						<th>Issue</th>
+						<th>Category</th>
+						<th>Status</th>
+						<th class="text-end">Action</th>
+					</tr>
+				</thead>
+				<tbody>@foreach(var issue in Model)
+					{
+						<tr>
+							<td>@issue.Customer?.AppUser?.FirstName @issue.Customer?.AppUser?.LastName</td>
+							<td>@issue.Accomodation?.Name</td>
+							<td><strong>@issue.Title</strong><br/><small>@issue.Description</small></td>
+							<td>@issue.Category</td>
+							<td><partial name="_StatusBadge" model="@issue.Status.ToString()"/></td>
+							<td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="UpdateIssue" asp-route-id="@issue.Id">Update</a></td>
+						</tr>
+					}
+				</tbody>
+			</table>
+		</div>
+	}
+	else
+	{
+		<div class="empty-state">No accommodation issues have been reported.</div>
+	}
+}</section>

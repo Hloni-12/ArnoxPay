@@ -1,3 +1,57 @@
 @model List<Accomodation>
-@{ ViewData["Title"] = "Manage accomodations"; }
-<div class="d-flex justify-content-between align-items-end mb-4"><div><h1 class="page-title h2 mb-1">Accomodations</h1><p class="text-muted mb-0">Create residence listings, upload pictures, and manage availability.</p></div><a class="btn btn-primary" asp-action="AddUpdate">Add accomodation</a></div><section class="content-card p-0 overflow-hidden">@if(Model.Any()){<div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Image</th><th>Name / unit</th><th>Type</th><th>Capacity</th><th>State</th><th class="text-end">Actions</th></tr></thead><tbody>@foreach(var item in Model){var image=item.Images.OrderByDescending(x=>x.IsPrimary).FirstOrDefault();<tr><td>@if(image is not null){<img src="@image.ImagePath" class="table-thumbnail" alt="@item.Name"/>}else{<span class="text-muted small">No image</span>}</td><td><strong>@item.Name</strong><br/><small>Unit @item.UnitNumber</small></td><td>@item.AccommodationType</td><td>@item.Residents.Count / @item.Capacity</td><td>@(item.IsActive ? "Published" : "Hidden")</td><td class="text-end"><a class="btn btn-sm btn-outline-primary" asp-action="AddUpdate" asp-route-id="@item.Id">Edit</a><a class="btn btn-sm btn-outline-secondary" asp-action="Images" asp-route-id="@item.Id">Images</a></td></tr>}</tbody></table></div>}else{<div class="empty-state">No accomodations added yet.</div>}</section>
+@{ 
+	ViewData["Title"] = "Manage accomodations"; 
+}
+<div class="d-flex justify-content-between align-items-end mb-4">
+	<div>
+		<h1 class="page-title h2 mb-1">Accomodations</h1>
+		<p class="text-muted mb-0">Create residence listings, upload pictures, and manage availability.</p>
+	</div>
+	<a class="btn btn-primary" asp-action="AddUpdate">Add accomodation</a>
+</div>
+<section class="content-card p-0 overflow-hidden">@if(Model.Any())
+	{
+		<div class="table-responsive">
+			<table class="table table-hover mb-0">
+				<thead>
+					<tr>
+						<th>Image</th>
+						<th>Name / unit</th>
+						<th>Type</th>
+						<th>Capacity</th>
+						<th>State</th>
+						<th class="text-end">Actions</th>
+					</tr>
+				</thead>
+				<tbody>@foreach(var item in Model)
+					{
+						var image=item.Images.OrderByDescending(x=>x.IsPrimary).FirstOrDefault();
+						<tr>
+							<td>@if(image is not null)
+								{
+									<img src="@image.ImagePath" class="table-thumbnail" alt="@item.Name"/>
+								}
+								else
+								{
+									<span class="text-muted small">No image</span>
+								}
+							</td>
+						<td>
+							<strong>@item.Name</strong>
+							<br/><small>Unit @item.UnitNumber</small></td>
+						<td>@item.AccommodationType</td>
+						<td>@item.Residents.Count / @item.Capacity</td>
+						<td>@(item.IsActive ? "Published" : "Hidden")</td>
+						<td class="text-end">
+							<a class="btn btn-sm btn-outline-primary" asp-action="AddUpdate" asp-route-id="@item.Id">Edit</a>
+							<a class="btn btn-sm btn-outline-secondary" asp-action="Images" asp-route-id="@item.Id">Images</a></td>
+					</tr>
+				}</tbody>
+			</table>
+		</div>
+	}
+	else
+	{
+		<div class="empty-state">No accomodations added yet.</div>
+	}
+</section>

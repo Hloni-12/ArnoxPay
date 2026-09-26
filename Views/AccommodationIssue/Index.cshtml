@@ -1,3 +1,41 @@
 @model List<AccommodationIssue>
-@{ ViewData["Title"] = "My accommodation issues"; }
-<div class="d-flex justify-content-between align-items-end mb-4"><div><h1 class="page-title h2 mb-1">Accommodation issues</h1><p class="text-muted mb-0">Report and monitor maintenance or residence concerns.</p></div><a class="btn btn-primary" asp-action="Create">Report an issue</a></div><section class="content-card p-0 overflow-hidden">@if(Model.Any()){<div class="table-responsive"><table class="table table-hover mb-0"><thead><tr><th>Accomodation</th><th>Issue</th><th>Category</th><th>Reported</th><th>Status</th><th>Resolution note</th></tr></thead><tbody>@foreach(var issue in Model){<tr><td>@issue.Accomodation?.Name</td><td><strong>@issue.Title</strong><br/><small>@issue.Description</small></td><td>@issue.Category</td><td>@issue.ReportedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td><td><partial name="_StatusBadge" model="@issue.Status.ToString()"/></td><td>@issue.ResolutionNote</td></tr>}</tbody></table></div>}else{<div class="empty-state">No accommodation issues have been reported.</div>}</section>
+@{ 
+	ViewData["Title"] = "My accommodation issues";
+}
+<div class="d-flex justify-content-between align-items-end mb-4">
+	<div>
+		<h1 class="page-title h2 mb-1">Accommodation issues</h1>
+		<p class="text-muted mb-0">Report and monitor maintenance or residence concerns.</p>
+	</div>
+	<a class="btn btn-primary" asp-action="Create">Report an issue</a>
+</div>
+	<section class="content-card p-0 overflow-hidden">@if(Model.Any()){
+		<div class="table-responsive">
+			<table class="table table-hover mb-0">
+				<thead>
+					<tr>
+						<th>Accomodation</th>
+						<th>Issue</th>
+						<th>Category</th>
+						<th>Reported</th>
+						<th>Status</th>
+						<th>Resolution note</th>
+					</tr>
+				</thead>
+				<tbody>@foreach(var issue in Model){
+					<tr>
+						<td>@issue.Accomodation?.Name</td>
+						<td><strong>@issue.Title</strong><br/><small>@issue.Description</small></td>
+						<td>@issue.Category</td>
+						<td>@issue.ReportedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+						<td><partial name="_StatusBadge" model="@issue.Status.ToString()"/></td>
+						<td>@issue.ResolutionNote</td>
+					</tr>}
+				</tbody>
+			</table>
+		</div>}
+			else
+			{
+				<div class="empty-state">No accommodation issues have been reported.</div>
+			}
+	</section>
