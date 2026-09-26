@@ -1840,3 +1840,72 @@ body {
     height: 340px;
   }
 }
+/* Home page – About + Social icons */
+.pg-about-social {
+    padding: 4rem 0 5rem;
+    background: #0f172a;
+    color: #e2e8f0;
+    text-align: center;
+}
+
+    .pg-about-social .pg-eyebrow {
+        color: #a5b4fc;
+    }
+
+    .pg-about-social h2 {
+        color: #fff;
+    }
+
+    .pg-about-social .pg-section-sub {
+        color: #94a3b8;
+        max-width: 36rem;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+.home-social-icons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.home-social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e2e8f0;
+    font-size: 1.2rem;
+    text-decoration: none;
+    transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+    .home-social-link:hover {
+        transform: translateY(-4px);
+        color: #fff;
+    }
+
+    .home-social-link.facebook:hover {
+        background: #1877f2;
+    }
+
+    .home-social-link.twitter:hover {
+        background: #000;
+    }
+
+    .home-social-link.instagram:hover {
+        background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+    }
+
+    .home-social-link.linkedin:hover {
+        background: #0a66c2;
+    }
+
+    .home-social-link.youtube:hover {
+        background: #ff0000;
+    }
