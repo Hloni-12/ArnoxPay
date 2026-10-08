@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 namespace ArnoxPay.Controllers;
 
-public class PaymentController(AppDbContext context, UserManager<AppUser> userManager, INotificationService notifications, ITransactionService transactions, ICheckoutService checkout) : Controller
+public class PaymentController(AppDbContext context, UserManager<AppUser> userManager, INotificationService notifications, ITransactionService transactions, ICheckoutService checkout, ICampusAccountService campusAccounts) : Controller
 {
 
     [Authorize(Roles = SystemRoles.FinancialOfficer + "," + SystemRoles.Administrator)]
@@ -104,7 +104,25 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
             ViewBag.Gateway = HttpContext.RequestServices.GetRequiredService<IPaymentGateway>();
             return View(payment);
         }
-        await checkout.SetPaymentMethodAsync(payment, paymentMethod.Trim());
+        var method = paymentMethod.Trim();
+        if (string.Equals(method, "Mastercard", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(method, "Card/Bank Payment", StringComparison.OrdinalIgnoreCase))
+        {
+            await checkout.SetPaymentMethodAsync(payment, "Mastercard");
+            return RedirectToAction(nameof(CardPayment), new { id });
+        }
+        if (string.Equals(method, "Campus Account", StringComparison.OrdinalIgnoreCase))
+        {
+            var balance = await campusAccounts.GetBalanceAsync(payment.CustomerId);
+            if (balance < payment.Amount)
+            {
+                TempData["Error"] = $"Insufficient funds. Your campus account balance is R{balance:N2}, but you need R{payment.Amount:N2}.";
+                return RedirectToAction(nameof(FundCampusAccount), new { returnPaymentId = id });
+            }
+            await checkout.SetPaymentMethodAsync(payment, "Campus Account");
+            return RedirectToAction(nameof(Confirm), new { id });
+        }
+        await checkout.SetPaymentMethodAsync(payment, method);
         return RedirectToAction(nameof(Confirm), new { id });
     }
 
@@ -163,6 +181,19 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
         if (payment is null) return NotFound();
         if (payment.Status == PaymentStatus.Processing)
         {
+            // Debit campus account before finalising process if that method was chosen
+            if (string.Equals(payment.PaymentMethod, "Campus Account", StringComparison.OrdinalIgnoreCase))
+            {
+                var (ok, msg) = await campusAccounts.DebitAsync(
+                    payment.CustomerId, payment.Amount, payment.Id, payment.TransactionReference ?? payment.Id.ToString());
+                if (!ok)
+                {
+                    await checkout.MarkFailedAsync(payment, msg);
+                    await notifications.CreateAsync(payment.CustomerId, "Payment failed", msg);
+                    return RedirectToAction(nameof(Result), new { id });
+                }
+            }
+
             var result = await checkout.ProcessAsync(payment);
             if (result.Success && payment.Status == PaymentStatus.Pending)
             {
@@ -199,6 +230,9 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
         if (c is null) return null;
         var q = track ? context.Payments.AsQueryable() : context.Payments.AsNoTracking();
         return await q.Include(x => x.Customer).ThenInclude(x => x!.AppUser)
+            .Include(x => x.Items)
+            .Include(x => x.Transaction)
+            .Include(x => x.Items)
             .FirstOrDefaultAsync(x => x.Id == id && x.CustomerId == c.Id);
     }
 
@@ -238,6 +272,9 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
         {
             payment.CompletedAtUtc = DateTime.UtcNow;
             payment.FailureReason = null;
+            // Mark line items as paid so the same charge cannot be paid twice
+            var items = await context.PaymentItems.Where(i => i.PaymentId == payment.Id).ToListAsync();
+            foreach (var item in items) item.IsPaid = true;
             await context.SaveChangesAsync();
             if (officer is not null)
                 await transactions.CreateForAcceptedPaymentAsync(payment, officer.Id);
@@ -322,6 +359,7 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
         var payment = await context.Payments
             .Include(x => x.Customer).ThenInclude(c => c!.AppUser)
             .Include(x => x.Transaction)
+            .Include(x => x.Items)
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Id == id);
         if (payment is null) return NotFound();
@@ -340,6 +378,199 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
 
         return View(payment);
     }
+
+
+    // ---- Multi-service / multi-vehicle checkout (additive) ----
+
+    [Authorize(Roles = SystemRoles.Customer), HttpGet]
+    public async Task<IActionResult> SelectServices()
+    {
+        var c = await CurrentCustomer();
+        if (c is null) return NotFound();
+        var period = DateTime.UtcNow.ToString("yyyyMM");
+        var vehicles = await context.Vehicles.Where(v => v.CustomerId == c.Id && v.IsActive).AsNoTracking().ToListAsync();
+        var model = new MultiCheckoutViewModel
+        {
+            Charges =
+            [
+                new SelectableCharge { PaymentType = PaymentType.Rent, DisplayName = "Rent", Amount = 0m, OutstandingChargeKey = $"rent-{c.Id}-{period}" },
+                new SelectableCharge { PaymentType = PaymentType.Electricity, DisplayName = "Electricity", Amount = 0m, OutstandingChargeKey = $"elec-{c.Id}-{period}" },
+                new SelectableCharge { PaymentType = PaymentType.Water, DisplayName = "Water", Amount = 0m, OutstandingChargeKey = $"water-{c.Id}-{period}" },
+                new SelectableCharge { PaymentType = PaymentType.RefuseCollection, DisplayName = "Refuse", Amount = 0m, OutstandingChargeKey = $"refuse-{c.Id}-{period}" },
+            ]
+        };
+        foreach (var v in vehicles)
+        {
+            model.Charges.Add(new SelectableCharge
+            {
+                PaymentType = PaymentType.Parking,
+                DisplayName = $"Parking - {v.RegistrationNumber}",
+                Amount = 0m,
+                VehicleId = v.Id,
+                VehicleRegistration = v.RegistrationNumber,
+                OutstandingChargeKey = $"park-{v.Id}-{period}"
+            });
+        }
+        var paid = await context.PaymentItems
+            .Where(pi => pi.Payment!.CustomerId == c.Id && pi.IsPaid)
+            .Select(pi => pi.OutstandingChargeKey).ToListAsync();
+        foreach (var ch in model.Charges)
+            if (paid.Contains(ch.OutstandingChargeKey)) ch.AlreadyPaid = true;
+        return View(model);
+    }
+
+    [Authorize(Roles = SystemRoles.Customer), HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> SelectServices(MultiCheckoutViewModel model)
+    {
+        var c = await CurrentCustomer();
+        if (c is null) return NotFound();
+        var items = new List<CheckoutLineItem>();
+        if (model.Charges != null)
+        {
+            foreach (var ch in model.Charges.Where(x => x.Selected && !x.AlreadyPaid && x.Amount > 0))
+            {
+                items.Add(new CheckoutLineItem
+                {
+                    PaymentType = ch.PaymentType,
+                    Amount = ch.Amount,
+                    Description = ch.DisplayName,
+                    VehicleId = ch.VehicleId,
+                    VehicleRegistration = ch.VehicleRegistration,
+                    OutstandingChargeKey = ch.OutstandingChargeKey
+                });
+            }
+        }
+        if (items.Count == 0)
+        {
+            var selectedNoAmount = model.Charges != null && model.Charges.Any(x => x.Selected && !x.AlreadyPaid && x.Amount <= 0);
+            ModelState.AddModelError(string.Empty,
+                selectedNoAmount
+                    ? "Enter an amount greater than R0 for each selected payment."
+                    : "Select at least one payment and enter the amount.");
+            return View(model);
+        }
+        try
+        {
+            var payment = await checkout.CreateMultiCheckoutAsync(c.Id, items, model.Notes, model.IdempotencyKey);
+            return RedirectToAction(nameof(Details), new { id = payment.Id });
+        }
+        catch (InvalidOperationException ex)
+        {
+            ModelState.AddModelError(string.Empty, ex.Message);
+            return View(model);
+        }
+    }
+
+    [Authorize(Roles = SystemRoles.Customer), HttpGet]
+    public async Task<IActionResult> CardPayment(int id)
+    {
+        var payment = await LoadOwnPayment(id);
+        if (payment is null) return NotFound();
+        return View(new CardPaymentFormModel
+        {
+            PaymentId = payment.Id,
+            Amount = payment.Amount,
+            TransactionReference = payment.TransactionReference
+        });
+    }
+
+    [Authorize(Roles = SystemRoles.Customer), HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> CardPayment(CardPaymentFormModel model)
+    {
+        var payment = await LoadOwnPayment(model.PaymentId, track: true);
+        if (payment is null) return NotFound();
+        var serverAmount = payment.Amount; // never trust browser amount
+        var v = CardPaymentValidator.Validate(model.CardholderName, model.CardNumber, model.ExpiryMonth, model.ExpiryYear, model.Cvv, serverAmount);
+        if (!v.IsValid)
+        {
+            ModelState.AddModelError(string.Empty, v.ErrorMessage ?? "Payment could not be processed");
+            model.Amount = serverAmount;
+            model.TransactionReference = payment.TransactionReference;
+            model.CardNumber = "";
+            model.Cvv = "";
+            return View(model);
+        }
+        await checkout.SetPaymentMethodAsync(payment, "Mastercard");
+        await checkout.SetMaskedCardAsync(payment, v.MaskedNumber!);
+        return RedirectToAction(nameof(Confirm), new { id = payment.Id });
+    }
+
+    [Authorize(Roles = SystemRoles.Customer), HttpGet]
+    public async Task<IActionResult> CampusBalance()
+    {
+        var c = await CurrentCustomer();
+        if (c is null) return NotFound();
+        var account = await campusAccounts.GetOrCreateAsync(c.Id);
+        var history = await context.CampusAccountTransfers
+            .Where(t => t.CampusAccountId == account.Id)
+            .OrderByDescending(t => t.CreatedAtUtc)
+            .Take(50)
+            .AsNoTracking()
+            .ToListAsync();
+        var user = await userManager.GetUserAsync(User);
+        ViewBag.Balance = account.Balance;
+        ViewBag.CustomerName = user is null ? c.UserNumber : $"{user.FirstName} {user.LastName}".Trim();
+        return View(history);
+    }
+
+    [Authorize(Roles = SystemRoles.Customer), HttpGet]
+    public async Task<IActionResult> FundCampusAccount(int? returnPaymentId = null)
+    {
+        var c = await CurrentCustomer();
+        if (c is null) return NotFound();
+        var balance = await campusAccounts.GetBalanceAsync(c.Id);
+        decimal required = 0;
+        if (returnPaymentId.HasValue)
+        {
+            var pay = await LoadOwnPayment(returnPaymentId.Value);
+            if (pay is not null) required = pay.Amount;
+        }
+        return View(new CampusFundViewModel
+        {
+            CurrentBalance = balance,
+            RequiredAmount = required,
+            ReturnPaymentId = returnPaymentId,
+            TransferAmount = required > balance ? required - balance : 100m
+        });
+    }
+
+    [Authorize(Roles = SystemRoles.Customer), HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> FundCampusAccount(CampusFundViewModel model)
+    {
+        var c = await CurrentCustomer();
+        if (c is null) return NotFound();
+        if (model.TransferAmount <= 0)
+        {
+            ModelState.AddModelError(string.Empty, "Payment amount is invalid");
+            model.CurrentBalance = await campusAccounts.GetBalanceAsync(c.Id);
+            return View(model);
+        }
+        string? source = "Manual top-up";
+        if (!string.IsNullOrWhiteSpace(model.CardNumber))
+        {
+            var v = CardPaymentValidator.Validate(model.CardholderName, model.CardNumber, model.ExpiryMonth, model.ExpiryYear, model.Cvv, model.TransferAmount);
+            if (!v.IsValid)
+            {
+                ModelState.AddModelError(string.Empty, v.ErrorMessage ?? "Payment could not be processed");
+                model.CurrentBalance = await campusAccounts.GetBalanceAsync(c.Id);
+                model.CardNumber = null; model.Cvv = null;
+                return View(model);
+            }
+            source = v.MaskedNumber;
+        }
+        var (ok, msg, _) = await campusAccounts.DepositAsync(c.Id, model.TransferAmount, source);
+        if (!ok)
+        {
+            ModelState.AddModelError(string.Empty, msg);
+            model.CurrentBalance = await campusAccounts.GetBalanceAsync(c.Id);
+            return View(model);
+        }
+        TempData["Success"] = msg;
+        if (model.ReturnPaymentId.HasValue)
+            return RedirectToAction(nameof(Details), new { id = model.ReturnPaymentId.Value });
+        return RedirectToAction(nameof(FundCampusAccount));
+    }
+
 
     private async Task<Customer?> CurrentCustomer() {
         var u = await userManager.GetUserAsync(User);

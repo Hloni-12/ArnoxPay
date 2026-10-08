@@ -47,44 +47,8 @@ public class CustomerController(AppDbContext context, UserManager<AppUser> userM
     /// <summary>Redirect to Vehicle controller for real DB vehicle management.</summary>
     public IActionResult Vehicles() => RedirectToAction("Index", "Vehicle");
 
-    public async Task<IActionResult> Parking()
-    {
-        var user = await userManager.GetUserAsync(User);
-        if (user is null) return Challenge();
-        var customer = await context.Customers.FirstOrDefaultAsync(x => x.AppUserId == user.Id);
-        if (customer is null) return NotFound();
-
-        ViewData["FullName"] = $"{user.FirstName} {user.LastName}";
-
-        var bays = await context.ParkingBays
-        .Include(x => x.ParkingArea)
-        .OrderBy(x => x.ParkingAreaId).ThenBy(x => x.BayNumber)
-        .AsNoTracking()
-        .ToListAsync();
-
-        var vehicles = await context.Vehicles
-        .Where(x => x.CustomerId == customer.Id && x.IsActive)
-        .AsNoTracking()
-        .ToListAsync();
-
-        var activePermit = await context.ParkingPermits
-        .Include(x => x.Vehicle)
-        .Where(x => x.CustomerId == customer.Id && x.Status == ParkingPermitStatus.Active)
-        .OrderByDescending(x => x.ExpiryDate)
-        .AsNoTracking()
-        .FirstOrDefaultAsync();
-
-        ViewBag.Bays = bays;
-        ViewBag.Vehicles = vehicles;
-        ViewBag.ActivePermit = activePermit;
-        ViewBag.Total = bays.Count;
-        ViewBag.Available = bays.Count(x => x.Status == ParkingBayStatus.Available);
-        ViewBag.Occupied = bays.Count(x => x.Status == ParkingBayStatus.Occupied);
-        ViewBag.Reserved = bays.Count(x => x.Status == ParkingBayStatus.Reserved);
-        ViewBag.Maintenance = bays.Count(x => x.Status == ParkingBayStatus.Maintenance);
-
-        return View();
-    }
+    /// <summary>Parking map removed — use Vehicles and payment for parking fees.</summary>
+    public IActionResult Parking() => RedirectToAction("Index", "Vehicle");
 
     public async Task<IActionResult> Permit()
     {

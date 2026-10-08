@@ -2,27 +2,45 @@
 @{
     ViewData["Title"] = "Confirm payment";
     var name = $"{Model.Customer?.AppUser?.FirstName} {Model.Customer?.AppUser?.LastName}".Trim();
+    var items = Model.Items?.ToList() ?? new List<PaymentItem>();
+    if (items.Count == 0)
+        items.Add(new PaymentItem { PaymentType = Model.PaymentType, Amount = Model.Amount, Description = Model.PaymentType.ToString() });
+    var methodDisplay = !string.IsNullOrEmpty(Model.MaskedCardDisplay) ? Model.MaskedCardDisplay : (Model.PaymentMethod ?? "—");
 }
 <div class="fx-pay-shell">
     <div class="content-card">
         <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 3 · Confirm your payment</p>
-        <h1 class="page-title h3 mb-2">You are about to submit a payment of @Model.Amount.ToString("C") for @Model.PaymentType.</h1>
+        <h1 class="page-title h3 mb-2">Confirm Payment</h1>
         <p class="text-muted">Confirm to send this payment for Financial Officer review. It will not be marked as paid until an officer accepts it.</p>
 
-        <ul class="list-unstyled mb-4">
+        <ul class="list-unstyled mb-3">
             <li class="mb-1"><strong>Customer:</strong> @name</li>
-            <li class="mb-1"><strong>Service:</strong> @Model.PaymentType</li>
-            <li class="mb-1"><strong>Amount:</strong> @Model.Amount.ToString("C")</li>
-            <li class="mb-1"><strong>Method:</strong> @Model.PaymentMethod</li>
+            <li class="mb-1"><strong>Payment Method:</strong> @methodDisplay</li>
             <li class="mb-1"><strong>Reference:</strong> @Model.TransactionReference</li>
         </ul>
+
+        <div class="table-responsive mb-4">
+            <table class="table">
+                <thead><tr><th>Selected Services</th><th class="text-end">Amount</th></tr></thead>
+                <tbody>
+                    @foreach (var item in items)
+                    {
+                        <tr>
+                            <td>@(item.Description ?? item.PaymentType.ToString())</td>
+                            <td class="text-end">R @item.Amount.ToString("N2")</td>
+                        </tr>
+                    }
+                    <tr class="fw-bold"><td>TOTAL</td><td class="text-end">R @Model.Amount.ToString("N2")</td></tr>
+                </tbody>
+            </table>
+        </div>
 
         <div class="fx-pay-summary mb-4">
             <i class="fa-solid fa-lock me-2" aria-hidden="true"></i>
             Status remains <strong>not paid</strong> until authentication, processing, and Financial Officer acceptance succeed.
         </div>
 
-        <a class="btn btn-primary btn-lg" asp-action="Authenticate" asp-route-id="@Model.Id">Continue to authentication</a>
-        <a class="btn btn-outline-secondary btn-lg" asp-action="Details" asp-route-id="@Model.Id">Back</a>
+        <a class="btn btn-primary btn-lg" asp-action="Authenticate" asp-route-id="@Model.Id">Confirm &amp; Pay</a>
+        <a class="btn btn-outline-secondary btn-lg" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
     </div>
 </div>

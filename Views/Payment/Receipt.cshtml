@@ -73,11 +73,17 @@
         <div class="row g-2 small mb-2">
             <div class="col-sm-6"><span class="muted">Customer</span><div class="fw-semibold">@fullName</div></div>
             <div class="col-sm-6"><span class="muted">Student / Staff number</span><div class="fw-semibold">@studentNo</div></div>
-            <div class="col-sm-6"><span class="muted">Service</span><div class="fw-semibold">@Model.PaymentType</div></div>
+            @{
+                var rItems = Model.Items?.ToList() ?? new List<PaymentItem>();
+                var serviceLabel = rItems.Count > 1
+                    ? string.Join(", ", rItems.Select(i => i.Description ?? i.PaymentType.ToString()))
+                    : Model.PaymentType.ToString();
+            }
+            <div class="col-sm-6"><span class="muted">Service</span><div class="fw-semibold">@serviceLabel</div></div>
             <div class="col-sm-6"><span class="muted">Account reference</span><div class="fw-semibold">@Model.AccountReference</div></div>
             <div class="col-sm-6"><span class="muted">Transaction reference</span><div class="fw-semibold">@receiptNo</div></div>
             <div class="col-sm-6"><span class="muted">Receipt number</span><div class="fw-semibold">RCP-@Model.Id.ToString("D6")</div></div>
-            <div class="col-sm-6"><span class="muted">Payment method</span><div class="fw-semibold">@(Model.PaymentMethod ?? "—")</div></div>
+            <div class="col-sm-6"><span class="muted">Payment method</span><div class="fw-semibold">@(Model.MaskedCardDisplay ?? Model.PaymentMethod ?? "—")</div></div>
             <div class="col-sm-6"><span class="muted">Date &amp; time</span><div class="fw-semibold">@paidAt.ToLocalTime().ToString("dd MMMM yyyy, HH:mm")</div></div>
         </div>
 

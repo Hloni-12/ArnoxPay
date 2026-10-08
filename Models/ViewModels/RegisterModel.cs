@@ -3,6 +3,7 @@ namespace ArnoxPay.Models.ViewModels;
 
 /// <summary>
 /// Customer registration only. Fields: Account Type, Student/Staff Number, Name, Surname, Email, Password, Confirm Password.
+/// Student Number = exactly 10 digits. Staff Number = exactly 7 digits starting with 0.
 /// </summary>
 public class RegisterModel
 {
@@ -10,9 +11,10 @@ public class RegisterModel
     [Display(Name = "Account Type")]
     public CustomerCategory? Category { get; set; }
 
-    /// <summary>Student Number or Staff Number (login id). Not labelled "User Number" in the UI.</summary>
+    /// <summary>Student Number (10 digits) or Staff Number (7 digits starting with 0).</summary>
     [Required(ErrorMessage = "This number is required.")]
-    [StringLength(30, MinimumLength = 1)]
+    [StringLength(10, MinimumLength = 7, ErrorMessage = "Enter a valid Student/Staff Number.")]
+    [Display(Name = "Student / Staff Number")]
     public string UserNumber { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Name is required.")]

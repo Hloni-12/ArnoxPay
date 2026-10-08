@@ -21,6 +21,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<ParkingBay> ParkingBays => Set<ParkingBay>();
     public DbSet<ParkingPermit> ParkingPermits => Set<ParkingPermit>();
     public DbSet<ParkingSession> ParkingSessions => Set<ParkingSession>();
+    public DbSet<PaymentItem> PaymentItems => Set<PaymentItem>();
+    public DbSet<CampusAccount> CampusAccounts => Set<CampusAccount>();
+    public DbSet<CampusAccountTransfer> CampusAccountTransfers => Set<CampusAccountTransfer>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -149,5 +152,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.HasOne(x => x.ParkingBay).WithMany(x => x.Sessions).HasForeignKey(x => x.ParkingBayId).OnDelete(DeleteBehavior.Restrict);
         }
         );
+
+        builder.Entity<PaymentItem>(e =>
+        {
+            e.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+            e.HasIndex(x => x.OutstandingChargeKey);
+            e.HasOne(x => x.Payment).WithMany(x => x.Items).HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.Vehicle).WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.SetNull);
+        });
+        builder.Entity<CampusAccount>(e =>
+        {
+            e.Property(x => x.Balance).HasColumnType("decimal(18,2)");
+            e.HasIndex(x => x.CustomerId).IsUnique();
+            e.HasOne(x => x.Customer).WithOne(x => x.CampusAccount).HasForeignKey<CampusAccount>(x => x.CustomerId).OnDelete(DeleteBehavior.Cascade);
+        });
+        builder.Entity<CampusAccountTransfer>(e =>
+        {
+            e.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+            e.Property(x => x.BalanceBefore).HasColumnType("decimal(18,2)");
+            e.Property(x => x.BalanceAfter).HasColumnType("decimal(18,2)");
+            e.HasIndex(x => x.TransferReference).IsUnique();
+            e.HasOne(x => x.CampusAccount).WithMany(x => x.Transfers).HasForeignKey(x => x.CampusAccountId).OnDelete(DeleteBehavior.Cascade);
+        });
     }
 }

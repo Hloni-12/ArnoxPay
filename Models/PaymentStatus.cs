@@ -22,5 +22,8 @@ public enum PaymentStatus
     Processing = 4,
 
     /// <summary>Authentication or processing failed.</summary>
-    Failed = 5
+    Failed = 5,
+
+    /// <summary>Cancelled by customer.</summary>
+    Cancelled = 6
 }

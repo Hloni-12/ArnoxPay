@@ -363,6 +363,27 @@ namespace ArnoxPay.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "CampusAccounts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Balance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CampusAccounts", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CampusAccounts_Customers_CustomerId",
+                        column: x => x.CustomerId,
+                        principalTable: "Customers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Notifications",
                 columns: table => new
                 {
@@ -455,7 +476,9 @@ namespace ArnoxPay.Migrations
                     ReviewedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
                     FailureReason = table.Column<string>(type: "TEXT", maxLength: 300, nullable: true),
                     FinancialOfficerId = table.Column<int>(type: "INTEGER", nullable: true),
-                    OfficerReference = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true)
+                    OfficerReference = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    MaskedCardDisplay = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true),
+                    IdempotencyKey = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -472,6 +495,33 @@ namespace ArnoxPay.Migrations
                         principalTable: "FinancialOfficers",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CampusAccountTransfers",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CampusAccountId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TransferReference = table.Column<string>(type: "TEXT", maxLength: 40, nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    BalanceBefore = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    BalanceAfter = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    FundingSource = table.Column<string>(type: "TEXT", maxLength: 80, nullable: true),
+                    PaymentId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CampusAccountTransfers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CampusAccountTransfers_CampusAccounts_CampusAccountId",
+                        column: x => x.CampusAccountId,
+                        principalTable: "CampusAccounts",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -537,6 +587,38 @@ namespace ArnoxPay.Migrations
                         principalTable: "Vehicles",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PaymentItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PaymentType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    VehicleId = table.Column<int>(type: "INTEGER", nullable: true),
+                    VehicleRegistration = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    OutstandingChargeKey = table.Column<string>(type: "TEXT", maxLength: 80, nullable: true),
+                    IsPaid = table.Column<bool>(type: "INTEGER", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PaymentItems", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PaymentItems_Payments_PaymentId",
+                        column: x => x.PaymentId,
+                        principalTable: "Payments",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PaymentItems_Vehicles_VehicleId",
+                        column: x => x.VehicleId,
+                        principalTable: "Vehicles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
                 });
 
             migrationBuilder.CreateTable(
@@ -656,6 +738,23 @@ namespace ArnoxPay.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_CampusAccounts_CustomerId",
+                table: "CampusAccounts",
+                column: "CustomerId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampusAccountTransfers_CampusAccountId",
+                table: "CampusAccountTransfers",
+                column: "CampusAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_CampusAccountTransfers_TransferReference",
+                table: "CampusAccountTransfers",
+                column: "TransferReference",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Customers_AccomodationId",
                 table: "Customers",
                 column: "AccomodationId");
@@ -726,6 +825,21 @@ namespace ArnoxPay.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_ParkingSessions_VehicleId",
                 table: "ParkingSessions",
+                column: "VehicleId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentItems_OutstandingChargeKey",
+                table: "PaymentItems",
+                column: "OutstandingChargeKey");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentItems_PaymentId",
+                table: "PaymentItems",
+                column: "PaymentId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PaymentItems_VehicleId",
+                table: "PaymentItems",
                 column: "VehicleId");
 
             migrationBuilder.CreateIndex(
@@ -809,6 +923,9 @@ namespace ArnoxPay.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "CampusAccountTransfers");
+
+            migrationBuilder.DropTable(
                 name: "Notifications");
 
             migrationBuilder.DropTable(
@@ -818,6 +935,9 @@ namespace ArnoxPay.Migrations
                 name: "ParkingSessions");
 
             migrationBuilder.DropTable(
+                name: "PaymentItems");
+
+            migrationBuilder.DropTable(
                 name: "ServiceReviews");
 
             migrationBuilder.DropTable(
@@ -825,6 +945,9 @@ namespace ArnoxPay.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "CampusAccounts");
 
             migrationBuilder.DropTable(
                 name: "ParkingBays");

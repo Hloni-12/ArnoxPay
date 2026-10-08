@@ -11,7 +11,11 @@ builder.Services.AddControllersWithViews();
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.ConfigureWarnings(w =>
+        w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+});
 
 // Application services
 builder.Services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
@@ -22,6 +26,7 @@ builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IPaymentGateway, InternalPaymentProcessor>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<ICampusAccountService, CampusAccountService>();
 
 // Routing (lowercase URLs)
 builder.Services.AddRouting(options =>
@@ -64,18 +69,27 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-// Seed roles + default administrator (safe if DB is not ready yet)
+// Apply migrations + seed roles/admin (safe if DB is not ready yet)
 using (var scope = app.Services.CreateScope())
 {
+    var logger = scope.ServiceProvider
+        .GetRequiredService<ILoggerFactory>()
+        .CreateLogger("Startup");
+    try
+    {
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        await db.Database.MigrateAsync();
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Database migrate was skipped. Check connection string and migrations.");
+    }
     try
     {
         await AdministratorAccountSeeder.SeedAsync(scope.ServiceProvider);
     }
     catch (Exception ex)
     {
-        var logger = scope.ServiceProvider
-            .GetRequiredService<ILoggerFactory>()
-            .CreateLogger("Startup");
         logger.LogWarning(
             ex,
             "Database seeding was skipped. Create ArnoxPayDB and apply migrations, then restart.");

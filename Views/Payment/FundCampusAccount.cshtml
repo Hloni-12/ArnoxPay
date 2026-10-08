@@ -1,0 +1,44 @@
+@model ArnoxPay.Models.ViewModels.CampusFundViewModel
+@{ ViewData["Title"] = "Fund campus account"; }
+<div class="fx-pay-shell">
+    <div class="content-card">
+        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Campus account</p>
+        <h1 class="page-title h3 mb-2">Transfer money to campus account</h1>
+        @if (TempData["Success"] != null) { <div class="alert alert-success">@TempData["Success"]</div> }
+        @if (TempData["Error"] != null) { <div class="alert alert-danger">@TempData["Error"]</div> }
+        <div class="fx-pay-summary p-3 mb-4 border rounded bg-light">
+            <div class="d-flex justify-content-between"><span>Current balance</span><strong>R @Model.CurrentBalance.ToString("N2")</strong></div>
+            @if (Model.RequiredAmount > 0)
+            {
+                <div class="d-flex justify-content-between"><span>Payment required</span><span>R @Model.RequiredAmount.ToString("N2")</span></div>
+                @if (Model.CurrentBalance < Model.RequiredAmount)
+                {
+                    <div class="text-danger mt-2">Insufficient funds. Your campus account balance is R @Model.CurrentBalance.ToString("N2"), but you need R @Model.RequiredAmount.ToString("N2").</div>
+                }
+            }
+        </div>
+        <form method="post" asp-action="FundCampusAccount">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="ReturnPaymentId" />
+            <input type="hidden" asp-for="RequiredAmount" />
+            <div asp-validation-summary="All" class="text-danger mb-3"></div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Amount to transfer (R)</label>
+                <input asp-for="TransferAmount" class="form-control form-control-lg" min="0.01" step="0.01" />
+            </div>
+            <h6 class="fw-semibold mt-3">Optional Mastercard funding</h6>
+            <div class="mb-2"><input asp-for="CardholderName" class="form-control" placeholder="Cardholder name" /></div>
+            <div class="mb-2"><input asp-for="CardNumber" class="form-control" placeholder="Card number" maxlength="19" autocomplete="off" /></div>
+            <div class="row g-2 mb-3">
+                <div class="col-4"><input asp-for="ExpiryMonth" class="form-control" placeholder="MM" maxlength="2" /></div>
+                <div class="col-4"><input asp-for="ExpiryYear" class="form-control" placeholder="YYYY" maxlength="4" /></div>
+                <div class="col-4"><input asp-for="Cvv" class="form-control" placeholder="CVV" maxlength="3" autocomplete="off" /></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg">Transfer Money to Campus Account</button>
+            @if (Model.ReturnPaymentId.HasValue)
+            {
+                <a class="btn btn-outline-secondary btn-lg ms-1" asp-action="Details" asp-route-id="@Model.ReturnPaymentId">Back to payment</a>
+            }
+        </form>
+    </div>
+</div>

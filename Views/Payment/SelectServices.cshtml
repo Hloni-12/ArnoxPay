@@ -1,0 +1,105 @@
+@model ArnoxPay.Models.ViewModels.MultiCheckoutViewModel
+@{
+    ViewData["Title"] = "Select payments";
+}
+<div class="fx-pay-shell">
+    <div class="content-card">
+        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 1 · Service selection</p>
+        <h1 class="page-title h3 mb-1">Select payments</h1>
+        <p class="text-muted mb-4">Choose the services or vehicles you want to pay for and enter the amount for each.</p>
+
+        <form method="post" asp-action="SelectServices" id="multiForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="IdempotencyKey" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="d-flex gap-2 mb-3">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAll">Select all</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnNone">Deselect all</button>
+            </div>
+
+            <div class="list-group mb-4">
+                @for (var i = 0; i < Model.Charges.Count; i++)
+                {
+                    <div class="list-group-item @(Model.Charges[i].AlreadyPaid ? "list-group-item-success" : "")">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                            <label class="d-flex align-items-center mb-0 gap-2">
+                                <input type="checkbox" class="form-check-input charge-cb"
+                                       name="Charges[@i].Selected" value="true"
+                                       @(Model.Charges[i].Selected ? "checked" : "")
+                                       @(Model.Charges[i].AlreadyPaid ? "disabled" : "") />
+                                <span>
+                                    @Model.Charges[i].DisplayName
+                                    @if (Model.Charges[i].AlreadyPaid) { <span class="badge bg-success ms-1">Paid</span> }
+                                </span>
+                            </label>
+                            <div class="input-group" style="max-width: 180px;">
+                                <span class="input-group-text">R</span>
+                                <input type="number" class="form-control amount-input" min="0.01" step="0.01"
+                                       name="Charges[@i].Amount"
+                                       value="@(Model.Charges[i].Amount > 0 ? Model.Charges[i].Amount.ToString("0.##") : "")"
+                                       placeholder="0.00"
+                                       @(Model.Charges[i].AlreadyPaid ? "disabled" : "") />
+                            </div>
+                        </div>
+                        <input type="hidden" name="Charges[@i].PaymentType" value="@Model.Charges[i].PaymentType" />
+                        <input type="hidden" name="Charges[@i].DisplayName" value="@Model.Charges[i].DisplayName" />
+                        <input type="hidden" name="Charges[@i].VehicleId" value="@Model.Charges[i].VehicleId" />
+                        <input type="hidden" name="Charges[@i].VehicleRegistration" value="@Model.Charges[i].VehicleRegistration" />
+                        <input type="hidden" name="Charges[@i].OutstandingChargeKey" value="@Model.Charges[i].OutstandingChargeKey" />
+                        <input type="hidden" name="Charges[@i].AlreadyPaid" value="@Model.Charges[i].AlreadyPaid.ToString().ToLower()" />
+                    </div>
+                }
+            </div>
+
+            <div class="fx-pay-summary p-3 mb-4 border rounded bg-light">
+                <div class="d-flex justify-content-between fw-bold fs-5">
+                    <span>Total</span><span id="lblTotal">R 0.00</span>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" id="btnGo" disabled>Continue to Payment</button>
+            <a class="btn btn-outline-secondary btn-lg ms-1" asp-controller="Customer" asp-action="Index">Cancel</a>
+        </form>
+    </div>
+</div>
+@section Scripts {
+<script>
+(function(){
+  function recalc(){
+    let t = 0;
+    document.querySelectorAll('.list-group-item').forEach(row => {
+      const cb = row.querySelector('.charge-cb');
+      const amt = row.querySelector('.amount-input');
+      if (cb && !cb.disabled && cb.checked && amt) {
+        const v = parseFloat(amt.value);
+        if (!isNaN(v) && v > 0) t += v;
+      }
+    });
+    document.getElementById('lblTotal').textContent = 'R ' + t.toFixed(2);
+    document.getElementById('btnGo').disabled = t <= 0;
+  }
+  document.getElementById('btnAll').onclick = () => {
+    document.querySelectorAll('.charge-cb:not(:disabled)').forEach(c => c.checked = true);
+    recalc();
+  };
+  document.getElementById('btnNone').onclick = () => {
+    document.querySelectorAll('.charge-cb').forEach(c => c.checked = false);
+    recalc();
+  };
+  document.querySelectorAll('.charge-cb, .amount-input').forEach(el => {
+    el.addEventListener('change', recalc);
+    el.addEventListener('input', recalc);
+  });
+  // Auto-check when user types an amount
+  document.querySelectorAll('.amount-input').forEach(inp => {
+    inp.addEventListener('input', function(){
+      const cb = this.closest('.list-group-item').querySelector('.charge-cb');
+      if (cb && !cb.disabled && parseFloat(this.value) > 0) cb.checked = true;
+      recalc();
+    });
+  });
+  recalc();
+})();
+</script>
+}

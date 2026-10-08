@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ArnoxPay.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260926003613_initial")]
+    [Migration("20261007235618_initial ")]
     partial class initial
     {
         /// <inheritdoc />
@@ -261,6 +261,76 @@ namespace ArnoxPay.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.CampusAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId")
+                        .IsUnique();
+
+                    b.ToTable("CampusAccounts");
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.CampusAccountTransfer", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("CampusAccountId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("FundingSource")
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("PaymentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TransferReference")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CampusAccountId");
+
+                    b.HasIndex("TransferReference")
+                        .IsUnique();
+
+                    b.ToTable("CampusAccountTransfers");
                 });
 
             modelBuilder.Entity("ArnoxPay.Models.Customer", b =>
@@ -551,6 +621,14 @@ namespace ArnoxPay.Migrations
                     b.Property<int?>("FinancialOfficerId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MaskedCardDisplay")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
@@ -591,6 +669,50 @@ namespace ArnoxPay.Migrations
                     b.HasIndex("TransactionReference");
 
                     b.ToTable("Payments");
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.PaymentItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("OutstandingChargeKey")
+                        .HasMaxLength(80)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PaymentId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("PaymentType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("VehicleId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("VehicleRegistration")
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OutstandingChargeKey");
+
+                    b.HasIndex("PaymentId");
+
+                    b.HasIndex("VehicleId");
+
+                    b.ToTable("PaymentItems");
                 });
 
             modelBuilder.Entity("ArnoxPay.Models.ServiceReview", b =>
@@ -897,6 +1019,28 @@ namespace ArnoxPay.Migrations
                     b.Navigation("Accomodation");
                 });
 
+            modelBuilder.Entity("ArnoxPay.Models.CampusAccount", b =>
+                {
+                    b.HasOne("ArnoxPay.Models.Customer", "Customer")
+                        .WithOne("CampusAccount")
+                        .HasForeignKey("ArnoxPay.Models.CampusAccount", "CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.CampusAccountTransfer", b =>
+                {
+                    b.HasOne("ArnoxPay.Models.CampusAccount", "CampusAccount")
+                        .WithMany("Transfers")
+                        .HasForeignKey("CampusAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CampusAccount");
+                });
+
             modelBuilder.Entity("ArnoxPay.Models.Customer", b =>
                 {
                     b.HasOne("ArnoxPay.Models.Accomodation", "Accomodation")
@@ -1002,6 +1146,24 @@ namespace ArnoxPay.Migrations
                     b.Navigation("Customer");
 
                     b.Navigation("FinancialOfficer");
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.PaymentItem", b =>
+                {
+                    b.HasOne("ArnoxPay.Models.Payment", "Payment")
+                        .WithMany("Items")
+                        .HasForeignKey("PaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ArnoxPay.Models.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("Payment");
+
+                    b.Navigation("Vehicle");
                 });
 
             modelBuilder.Entity("ArnoxPay.Models.ServiceReview", b =>
@@ -1121,11 +1283,18 @@ namespace ArnoxPay.Migrations
                     b.Navigation("FinancialOfficer");
                 });
 
+            modelBuilder.Entity("ArnoxPay.Models.CampusAccount", b =>
+                {
+                    b.Navigation("Transfers");
+                });
+
             modelBuilder.Entity("ArnoxPay.Models.Customer", b =>
                 {
                     b.Navigation("AccommodationAssignmentRequests");
 
                     b.Navigation("AccommodationIssues");
+
+                    b.Navigation("CampusAccount");
 
                     b.Navigation("Notifications");
 
@@ -1159,6 +1328,8 @@ namespace ArnoxPay.Migrations
 
             modelBuilder.Entity("ArnoxPay.Models.Payment", b =>
                 {
+                    b.Navigation("Items");
+
                     b.Navigation("Transaction");
                 });
 

@@ -1,0 +1,71 @@
+@model IList<ArnoxPay.Models.CampusAccountTransfer>
+@{
+    ViewData["Title"] = "Campus account balance";
+    var balance = (decimal)(ViewBag.Balance ?? 0m);
+    var name = ViewBag.CustomerName as string ?? "Customer";
+}
+<div class="fx-pay-shell">
+    <div class="content-card">
+        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Campus account</p>
+        <h1 class="page-title h3 mb-1">My campus account balance</h1>
+        <p class="text-muted mb-4">Money transferred from your bank/card into your campus account, and payments made from it.</p>
+
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success">@TempData["Success"]</div>
+        }
+
+        <div class="fx-pay-summary p-4 mb-4 border rounded bg-light">
+            <div class="text-muted small mb-1">@name</div>
+            <div class="d-flex justify-content-between align-items-end flex-wrap gap-2">
+                <div>
+                    <div class="text-muted small">Available balance</div>
+                    <div class="display-6 fw-bold" style="color:#7c3aed">R @balance.ToString("N2")</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-primary" asp-action="FundCampusAccount">Transfer money to campus account</a>
+                    <a class="btn btn-outline-secondary" asp-action="SelectServices">Make a payment</a>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="h5 fw-semibold mb-3">Transfer history</h2>
+        @if (Model == null || Model.Count == 0)
+        {
+            <p class="text-muted">No transfers yet. Use <strong>Transfer money to campus account</strong> to add funds from your bank card.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Reference</th>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Source</th>
+                            <th class="text-end">Amount</th>
+                            <th class="text-end">Balance after</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var t in Model)
+                        {
+                            var isOut = t.BalanceAfter < t.BalanceBefore;
+                            <tr>
+                                <td><code>@t.TransferReference</code></td>
+                                <td>@t.CreatedAtUtc.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>
+                                <td>@(t.Description ?? "—")</td>
+                                <td>@(t.FundingSource ?? "—")</td>
+                                <td class="text-end @(isOut ? "text-danger" : "text-success")">
+                                    @(isOut ? "-" : "+")R @t.Amount.ToString("N2")
+                                </td>
+                                <td class="text-end">R @t.BalanceAfter.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

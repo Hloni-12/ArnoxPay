@@ -39,7 +39,8 @@
         @* ---- Student Number OR Staff Number (never both; never "User Number") ---- *@
         <div class="mb-3">
             <label class="form-label" for="UserNumber" id="numberLabel">Student Number</label>
-            <input asp-for="UserNumber" class="form-control" id="UserNumber" autocomplete="username" />
+            <input asp-for="UserNumber" class="form-control" id="UserNumber" autocomplete="username"
+                   inputmode="numeric" maxlength="10" pattern="[0-9]*" />
             <span asp-validation-for="UserNumber" class="text-danger small"></span>
         </div>
 
@@ -90,6 +91,15 @@
     var help = document.getElementById('numberHelp');
     if (label) {
       label.textContent = (staff && staff.checked) ? 'Staff Number' : 'Student Number';
+      var hint = document.getElementById('numberHint');
+      var num = document.getElementById('UserNumber');
+      if (staff && staff.checked) {
+        if (hint) hint.textContent = 'Staff Number: exactly 7 digits, starting with 0 (e.g. 0123456).';
+        if (num) { num.maxLength = 7; num.placeholder = '0123456'; }
+      } else {
+        if (hint) hint.textContent = 'Student Number: exactly 10 digits.';
+        if (num) { num.maxLength = 10; num.placeholder = '2026123456'; }
+      }
     }
     if (help) {
       help.style.display = (staff && staff.checked) ? 'block' : 'none';

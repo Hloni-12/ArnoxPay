@@ -36,6 +36,74 @@ public sealed class CheckoutService(AppDbContext context, IPaymentGateway gatewa
             SubmittedAtUtc = DateTime.UtcNow
         };
 
+        payment.Items.Add(new PaymentItem
+        {
+            PaymentType = type,
+            Amount = amount,
+            Description = type.ToString()
+        });
+        context.Payments.Add(payment);
+        await context.SaveChangesAsync();
+        return payment;
+    }
+
+    public async Task<Payment> CreateMultiCheckoutAsync(
+        int customerId,
+        IReadOnlyList<CheckoutLineItem> items,
+        string? notes,
+        string? idempotencyKey)
+    {
+        if (items is null || items.Count == 0)
+            throw new InvalidOperationException("Select at least one payment.");
+
+        if (!string.IsNullOrWhiteSpace(idempotencyKey))
+        {
+            var existing = await context.Payments
+                .Include(p => p.Items)
+                .FirstOrDefaultAsync(p => p.IdempotencyKey == idempotencyKey && p.CustomerId == customerId);
+            if (existing is not null) return existing;
+        }
+
+        foreach (var item in items.Where(i => !string.IsNullOrWhiteSpace(i.OutstandingChargeKey)))
+        {
+            var paid = await context.PaymentItems.AnyAsync(pi =>
+                pi.OutstandingChargeKey == item.OutstandingChargeKey
+                && pi.IsPaid
+                && pi.Payment!.Status != PaymentStatus.Failed
+                && pi.Payment.Status != PaymentStatus.Rejected
+                && pi.Payment.Status != PaymentStatus.Cancelled);
+            if (paid)
+                throw new InvalidOperationException($"'{item.Description ?? item.PaymentType.ToString()}' has already been paid or is in progress.");
+        }
+
+        var total = items.Sum(i => i.Amount);
+        if (total <= 0) throw new InvalidOperationException("Payment amount is invalid");
+
+        var payment = new Payment
+        {
+            CustomerId = customerId,
+            PaymentType = items[0].PaymentType,
+            Amount = total,
+            AccountReference = items[0].AccountReference ?? $"MULTI-{DateTime.UtcNow:yyyyMMddHHmmss}",
+            Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim(),
+            Status = PaymentStatus.AwaitingAuthentication,
+            TransactionReference = NextTransactionReference(),
+            SubmittedAtUtc = DateTime.UtcNow,
+            IdempotencyKey = idempotencyKey
+        };
+        foreach (var item in items.Where(i => i.Amount > 0))
+        {
+            payment.Items.Add(new PaymentItem
+            {
+                PaymentType = item.PaymentType,
+                Amount = item.Amount,
+                Description = item.Description ?? (item.PaymentType == PaymentType.Parking && !string.IsNullOrEmpty(item.VehicleRegistration)
+                    ? $"Parking - {item.VehicleRegistration}" : item.PaymentType.ToString()),
+                VehicleId = item.VehicleId,
+                VehicleRegistration = item.VehicleRegistration,
+                OutstandingChargeKey = item.OutstandingChargeKey
+            });
+        }
         context.Payments.Add(payment);
         await context.SaveChangesAsync();
         return payment;
@@ -44,6 +112,12 @@ public sealed class CheckoutService(AppDbContext context, IPaymentGateway gatewa
     public async Task SetPaymentMethodAsync(Payment payment, string method)
     {
         payment.PaymentMethod = method;
+        await context.SaveChangesAsync();
+    }
+
+    public async Task SetMaskedCardAsync(Payment payment, string maskedDisplay)
+    {
+        payment.MaskedCardDisplay = maskedDisplay;
         await context.SaveChangesAsync();
     }
 

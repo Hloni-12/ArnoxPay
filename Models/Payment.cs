@@ -45,4 +45,14 @@ public class Payment
     public string? OfficerReference { get; set; }
 
     public Transaction? Transaction { get; set; }
+
+    /// <summary>e.g. Mastercard •••• 1234 — never full PAN.</summary>
+    [StringLength(40)]
+    public string? MaskedCardDisplay { get; set; }
+
+    [StringLength(64)]
+    public string? IdempotencyKey { get; set; }
+
+    public ICollection<PaymentItem> Items { get; set; } = new List<PaymentItem>();
 }
+

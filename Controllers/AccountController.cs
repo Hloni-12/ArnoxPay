@@ -100,15 +100,16 @@ public class AccountController(
                 if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^0\d{6}$"))
                 {
                     ModelState.AddModelError(nameof(model.UserNumber),
-                        "Staff Number must be exactly 7 digits and start with 0 (e.g. 0123456).");
+                        "Staff Number is invalid");
                 }
             }
             else if (model.Category == CustomerCategory.Student)
             {
-                // Student Number: numeric only
-                if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^\d+$"))
+                // Student Number: exactly 10 digits
+                if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^\d{10}$"))
                 {
-                    ModelState.AddModelError(nameof(model.UserNumber), "Student Number must be numeric.");
+                    ModelState.AddModelError(nameof(model.UserNumber),
+                        "Student Number is invalid");
                 }
             }
 

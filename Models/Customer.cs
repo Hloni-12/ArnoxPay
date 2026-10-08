@@ -35,4 +35,7 @@ public class Customer
     public ICollection<ServiceReview> ServiceReviews { get; set; } = new List<ServiceReview>();
     public ICollection<Vehicle> Vehicles { get; set; } = new List<Vehicle>();
     public ICollection<ParkingPermit> ParkingPermits { get; set; } = new List<ParkingPermit>();
+
+
+    public CampusAccount? CampusAccount { get; set; }
 }

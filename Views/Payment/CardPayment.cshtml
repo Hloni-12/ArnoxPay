@@ -1,0 +1,53 @@
+@model ArnoxPay.Models.ViewModels.CardPaymentFormModel
+@{ ViewData["Title"] = "Mastercard payment"; }
+<div class="fx-pay-shell">
+    <div class="content-card">
+        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Mastercard</p>
+        <h1 class="page-title h3 mb-2">Enter card details</h1>
+        <p class="text-muted mb-4">Amount: <strong>R @Model.Amount.ToString("N2")</strong> · Ref: <strong>@Model.TransactionReference</strong></p>
+        <div asp-validation-summary="All" class="text-danger mb-3"></div>
+        <form method="post" asp-action="CardPayment" id="cardForm" autocomplete="off">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="PaymentId" />
+            <input type="hidden" asp-for="Amount" />
+            <input type="hidden" asp-for="TransactionReference" />
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Cardholder name</label>
+                <input asp-for="CardholderName" class="form-control form-control-lg" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">Mastercard number</label>
+                <input asp-for="CardNumber" class="form-control form-control-lg" maxlength="19" inputmode="numeric" />
+            </div>
+            <div class="row g-3 mb-3">
+                <div class="col-4">
+                    <label class="form-label fw-semibold">Month</label>
+                    <select asp-for="ExpiryMonth" class="form-select form-select-lg">
+                        <option value="">MM</option>
+                        @for (var m = 1; m <= 12; m++) { <option value="@m.ToString("D2")">@m.ToString("D2")</option> }
+                    </select>
+                </div>
+                <div class="col-4">
+                    <label class="form-label fw-semibold">Year</label>
+                    <select asp-for="ExpiryYear" class="form-select form-select-lg">
+                        <option value="">YYYY</option>
+                        @for (var y = DateTime.UtcNow.Year; y <= DateTime.UtcNow.Year + 15; y++) { <option value="@y">@y</option> }
+                    </select>
+                </div>
+                <div class="col-4">
+                    <label class="form-label fw-semibold">CVV</label>
+                    <input asp-for="Cvv" class="form-control form-control-lg" maxlength="3" autocomplete="off" />
+                </div>
+            </div>
+            <div class="fx-pay-summary p-3 mb-4 border rounded bg-light">
+                <div class="d-flex justify-content-between fw-bold fs-5"><span>Total</span><span>R @Model.Amount.ToString("N2")</span></div>
+            </div>
+            <button type="submit" class="btn btn-primary btn-lg" id="btnPay">Continue</button>
+            <a class="btn btn-outline-secondary btn-lg ms-1" asp-action="Details" asp-route-id="@Model.PaymentId">Back</a>
+        </form>
+        <p class="fx-secure-note mt-3 mb-0"><i class="fa-solid fa-shield-halved"></i> Full card number and CVV are never stored.</p>
+    </div>
+</div>
+@section Scripts {
+<script>document.getElementById('cardForm').addEventListener('submit',function(){var b=document.getElementById('btnPay');b.disabled=true;b.textContent='Validating…';});</script>
+}
