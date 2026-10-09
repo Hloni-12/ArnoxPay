@@ -23,9 +23,11 @@
 				<tbody>
 					@foreach(var t in Model)
 					{
+						var tItems = t.Payment?.Items?.ToList() ?? new List<PaymentItem>();
+						var tServiceLabel = tItems.Count > 1 ? "Multiple Services" : (t.Payment?.PaymentType.ToString() ?? "—");
 						<tr>
 							<td>@t.TransactionReference</td>
-							<td>@t.Payment?.PaymentType</td>
+							<td>@tServiceLabel</td>
 							<td>@t.Amount.ToString("C")</td>
 							<td><partial name="_StatusBadge" model="@t.Status.ToString()"/></td>
 							<td>@t.CompletedAtUtc?.ToLocalTime().ToString("dd MMM yyyy HH:mm")</td>

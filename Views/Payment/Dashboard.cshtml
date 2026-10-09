@@ -33,10 +33,12 @@
         @foreach (var p in Model.RecentPayments)
         {
             var dot = p.Status == PaymentStatus.Accepted ? "ok" : p.Status == PaymentStatus.Rejected ? "fail" : "wait";
+            var pItems = p.Items?.ToList() ?? new List<PaymentItem>();
+            var pServiceLabel = pItems.Count > 1 ? "Multiple Services" : p.PaymentType.ToString();
             <li>
                 <span class="fx-dot @dot" aria-hidden="true"></span>
                 <div>
-                    <div class="title">@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName · @p.PaymentType</div>
+                    <div class="title">@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName · @pServiceLabel</div>
                     <div class="meta">@p.SubmittedAtUtc.ToString("dd MMM yyyy HH:mm") · @p.Status</div>
                 </div>
                 <div class="amount">@p.Amount.ToString("C")</div>

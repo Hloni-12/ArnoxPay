@@ -11,7 +11,11 @@
         <dl class="row">
             <dt class="col-sm-4">Transaction</dt><dd class="col-sm-8 fw-semibold">@Model.TransactionReference</dd>
             <dt class="col-sm-4">Amount</dt><dd class="col-sm-8">@Model.Amount.ToString("C")</dd>
-            <dt class="col-sm-4">Service</dt><dd class="col-sm-8">@Model.PaymentType</dd>
+            @{
+                var authItems = Model.Items?.ToList() ?? new List<PaymentItem>();
+                var authServiceLabel = authItems.Count > 1 ? "Multiple Services" : Model.PaymentType.ToString();
+            }
+            <dt class="col-sm-4">Service</dt><dd class="col-sm-8">@authServiceLabel</dd>
         </dl>
 
         <form method="post" class="d-flex flex-wrap gap-2 mt-3">

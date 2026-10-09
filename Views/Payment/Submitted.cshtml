@@ -1,6 +1,8 @@
 @model Payment
 @{
     ViewData["Title"] = "Payment submitted";
+    var submittedItems = Model.Items?.ToList() ?? new List<PaymentItem>();
+    var submittedServiceLabel = submittedItems.Count > 1 ? "Multiple Services" : Model.PaymentType.ToString();
 }
 <div class="content-card fx-success-panel">
     <div class="fx-success-icon" aria-hidden="true">
@@ -8,7 +10,7 @@
     </div>
     <h1 class="h3 fw-bold mb-2">Payment request submitted</h1>
     <p class="text-muted mb-4">
-        Your <strong>@Model.PaymentType</strong> payment of
+        Your <strong>@submittedServiceLabel</strong> payment of
         <strong>@Model.Amount.ToString("C")</strong> has been submitted successfully and is awaiting review.
     </p>
 
@@ -19,7 +21,7 @@
         </div>
         <div class="d-flex justify-content-between border-bottom py-2">
             <span class="text-muted">Service</span>
-            <span class="fw-semibold">@Model.PaymentType</span>
+            <span class="fw-semibold">@submittedServiceLabel</span>
         </div>
         <div class="d-flex justify-content-between border-bottom py-2">
             <span class="text-muted">Amount</span>

@@ -16,6 +16,11 @@ public class TransactionController(AppDbContext context, UserManager<AppUser> us
         if (u is null) return Challenge();
         var c = await context.Customers.FirstOrDefaultAsync(x => x.AppUserId == u.Id);
         if (c is null) return NotFound();
-        return View(await context.Transactions.Include(x => x.Payment).Where(x => x.Payment!.CustomerId == c.Id).OrderByDescending(x => x.CreatedAtUtc).AsNoTracking().ToListAsync());
+        return View(await context.Transactions
+            .Include(x => x.Payment!).ThenInclude(p => p.Items)
+            .Where(x => x.Payment!.CustomerId == c.Id)
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .AsNoTracking()
+            .ToListAsync());
     }
 }

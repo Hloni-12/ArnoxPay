@@ -34,9 +34,11 @@
             <tbody>
             @foreach (var p in Model)
             {
+                var pItems = p.Items?.ToList() ?? new List<PaymentItem>();
+                var pServiceLabel = pItems.Count > 1 ? "Multiple Services" : p.PaymentType.ToString();
                 <tr>
                     <td>@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName</td>
-                    <td>@p.PaymentType</td>
+                    <td>@pServiceLabel</td>
                     <td class="small">@(p.TransactionReference ?? "—")</td>
                     <td>@p.AccountReference</td>
                     <td>@p.Amount.ToString("C")</td>

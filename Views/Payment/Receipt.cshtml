@@ -76,7 +76,7 @@
             @{
                 var rItems = Model.Items?.ToList() ?? new List<PaymentItem>();
                 var serviceLabel = rItems.Count > 1
-                    ? string.Join(", ", rItems.Select(i => i.Description ?? i.PaymentType.ToString()))
+                    ? "Multiple Services"
                     : Model.PaymentType.ToString();
             }
             <div class="col-sm-6"><span class="muted">Service</span><div class="fw-semibold">@serviceLabel</div></div>

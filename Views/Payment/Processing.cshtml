@@ -8,7 +8,11 @@
         <h1 class="h3 fw-bold">Processing payment</h1>
         <p class="text-muted">Your payment is being recorded. After this step it will await Financial Officer review and will not be marked as paid yet.</p>
         <p class="mb-1"><strong>@Model.TransactionReference</strong></p>
-        <p class="mb-1">@Model.PaymentType · @Model.Amount.ToString("C")</p>
+        @{
+            var procItems = Model.Items?.ToList() ?? new List<PaymentItem>();
+            var procServiceLabel = procItems.Count > 1 ? "Multiple Services" : Model.PaymentType.ToString();
+        }
+        <p class="mb-1">@procServiceLabel · @Model.Amount.ToString("C")</p>
         <p class="fx-status pending d-inline-flex"><i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> PROCESSING</p>
 
         <form id="completeForm" method="post" asp-action="CompleteProcessing" asp-route-id="@Model.Id" class="d-none">

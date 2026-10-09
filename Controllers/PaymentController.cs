@@ -25,6 +25,7 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
             AcceptedTotal = await context.Payments.Where(x => x.Status == PaymentStatus.Accepted).SumAsync(x => (decimal?)x.Amount) ?? 0,
             RecentPayments = await context.Payments
                 .Include(x => x.Customer!).ThenInclude(c => c.AppUser)
+                .Include(x => x.Items)
                 .OrderByDescending(x => x.SubmittedAtUtc)
                 .Take(8)
                 .AsNoTracking()
@@ -38,7 +39,12 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
     {
         var c = await CurrentCustomer();
         if (c is null) return NotFound();
-        return View(await context.Payments.Where(x => x.CustomerId == c.Id).OrderByDescending(x => x.SubmittedAtUtc).AsNoTracking().ToListAsync());
+        return View(await context.Payments
+            .Include(x => x.Items)
+            .Where(x => x.CustomerId == c.Id)
+            .OrderByDescending(x => x.SubmittedAtUtc)
+            .AsNoTracking()
+            .ToListAsync());
     }
 
     // ========== Customer checkout lifecycle ==========
@@ -240,7 +246,13 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
     [Authorize(Roles = SystemRoles.FinancialOfficer + "," + SystemRoles.Administrator)]
     public async Task<IActionResult> Index(PaymentStatus? status)
     {
-        var query = context.Payments.Include(x => x.Customer!).ThenInclude(x => x.AppUser).Include(x => x.FinancialOfficer!).ThenInclude(x => x.AppUser).OrderByDescending(x => x.SubmittedAtUtc).AsNoTracking().AsQueryable();
+        var query = context.Payments
+            .Include(x => x.Customer!).ThenInclude(x => x.AppUser)
+            .Include(x => x.FinancialOfficer!).ThenInclude(x => x.AppUser)
+            .Include(x => x.Items)
+            .OrderByDescending(x => x.SubmittedAtUtc)
+            .AsNoTracking()
+            .AsQueryable();
         if (status.HasValue) query = query.Where(x => x.Status == status);
         ViewBag.SelectedStatus = status;
         return View(await query.ToListAsync());
