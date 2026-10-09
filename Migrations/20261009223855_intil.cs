@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ArnoxPay.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class intil : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
