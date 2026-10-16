@@ -14,7 +14,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         
-        <a class="btn btn-primary" asp-controller="Payment" asp-action="AddUpdate">Pay parking fee</a>
+        <a class="btn-arnox btn-arnox-primary" asp-controller="Payment" asp-action="AddUpdate">Pay parking fee</a>
     </div>
 </div>
 
@@ -22,8 +22,8 @@
     <div class="d-flex gap-3 align-items-start">
         <i class="fa-solid fa-circle-info mt-1" style="color:var(--arnox-purple);"></i>
         <div>
-            <strong class="d-block mb-1">Parking fee rule</strong>
-            <span class="text-muted small">The <strong>first</strong> vehicle is included under existing parking rules. Registering a <strong>second vehicle</strong> requires payment for the second-car parking permit. Complete the Parking payment after registering your second car.</span>
+            <strong class="d-block mb-1">Vehicle fee rule (enhanced)</strong>
+            <span class="text-muted small">The <strong>first</strong> vehicle registration fee is <strong>R0.00</strong>. The <strong>second and subsequent</strong> vehicles use the configured subsequent-vehicle fee (see server FeeSettings). Complete payment after registering a second car when a fee applies.</span>
         </div>
     </div>
 </div>
@@ -37,7 +37,7 @@
 <section class="content-card mb-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h2 class="h5 fw-bold mb-0">Your vehicles</h2>
-        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
+        <button type="button" class="btn-arnox btn-arnox-primary btn-arnox-sm" data-bs-toggle="modal" data-bs-target="#addVehicleModal">
             <i class="fa-solid fa-plus me-1"></i> Register vehicle
         </button>
     </div>

@@ -1,0 +1,74 @@
+@model ArnoxPay.Models.ViewModels.UtilityPurchaseForm
+@{
+    ViewData["Title"] = "Buy water";
+    var label = ViewBag.AccommodationLabel as string ?? "—";
+    var unitPrice = ViewBag.UnitPrice as decimal? ?? 0m;
+    var max = ViewBag.MaxUnits as decimal? ?? 5000m;
+    var unit = ViewBag.UnitOfMeasure as string ?? "kWh";
+}
+<div class="container py-3" style="max-width:560px">
+    <a class="btn-arnox btn-arnox-outline btn-arnox-sm mb-3" asp-action="Hub"><i class="fa-solid fa-arrow-left"></i> Services</a>
+    <h1 class="page-title h3 mb-1">Water</h1>
+    <p class="text-muted mb-4">Purchase units for your assigned accommodation. Amount is calculated from the configured tariff.</p>
+
+    <div class="content-card p-4 mb-3">
+        <div class="small text-muted">Step A · Accommodation</div>
+        <div class="fw-semibold fs-5 mb-3"><i class="fa-solid fa-building me-1 text-primary"></i>@label</div>
+
+        <form method="post" asp-action="Water" id="utilForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="AccommodationId" />
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label class="form-label fw-semibold" asp-for="Quantity">How many water units do you want to purchase?</label>
+                <div class="input-group input-group-lg">
+                    <input asp-for="Quantity" class="form-control" type="number" min="0.01" max="@max" step="0.01" id="qty" placeholder="e.g. 100" />
+                    <span class="input-group-text">@unit</span>
+                </div>
+                <div class="form-text">Max @max @unit · Price @unitPrice.ToString("C") / @unit</div>
+                <span asp-validation-for="Quantity" class="text-danger"></span>
+            </div>
+
+            <div class="p-3 rounded-3 mb-3" style="background:linear-gradient(135deg,#eef2ff,#f5f3ff);border:1px solid #e0e7ff">
+                <div class="small text-muted mb-2">Live price summary</div>
+                <div class="d-flex justify-content-between"><span>Residence</span><span class="fw-semibold">@label</span></div>
+                <div class="d-flex justify-content-between"><span>Units</span><span id="sumQty">0 @unit</span></div>
+                <div class="d-flex justify-content-between"><span>Price per unit</span><span>@unitPrice.ToString("C")</span></div>
+                <div class="d-flex justify-content-between"><span>Subtotal</span><span id="sumSub">R 0.00</span></div>
+                <div class="d-flex justify-content-between"><span>Additional fees</span><span>R 0.00</span></div>
+                <hr class="my-2" />
+                <div class="d-flex justify-content-between fs-4 fw-bold"><span>Total</span><span id="sumTotal" class="text-primary">R 0.00</span></div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label" asp-for="Notes">Notes (optional)</label>
+                <input asp-for="Notes" class="form-control" maxlength="200" />
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" name="action" value="add" class="btn-arnox btn-arnox-outline">Add another service</button>
+                <button type="submit" name="action" value="checkout" class="btn-arnox btn-arnox-primary">Review &amp; checkout</button>
+            </div>
+        </form>
+    </div>
+</div>
+@section Scripts {
+<script>
+(function(){
+  const price = @unitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture);
+  const unit = '@unit';
+  const qty = document.getElementById('qty');
+  function money(n){ return 'R ' + (isNaN(n)?0:n).toFixed(2); }
+  function recalc(){
+    const q = parseFloat(qty.value);
+    const ok = !isNaN(q) && q > 0;
+    document.getElementById('sumQty').textContent = ok ? (q + ' ' + unit) : ('0 ' + unit);
+    const t = ok ? q * price : 0;
+    document.getElementById('sumSub').textContent = money(t);
+    document.getElementById('sumTotal').textContent = money(t);
+  }
+  qty.addEventListener('input', recalc); recalc();
+})();
+</script>
+}

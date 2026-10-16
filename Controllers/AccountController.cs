@@ -16,52 +16,81 @@ public class AccountController(
     SignInManager<AppUser> signInManager,
     INotificationService notifications) : Controller
 {
-
-    [AllowAnonymous, HttpGet]
-    public IActionResult Login(string? returnUrl = null) => View(new LoginModel { ReturnUrl = returnUrl });
-
-    [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginModel model)
+    // =====================================================================
+    //  SHARED LOGIN LOGIC (used by both website and Android API)
+    // =====================================================================
+    private async Task<(AppUser? user, string? error)> ValidateLoginAsync(string loginId, string password)
     {
-        if (!ModelState.IsValid) return View(model);
+        loginId = (loginId ?? "").Trim();
 
-        var loginId = model.LoginId.Trim();
+        if (string.IsNullOrEmpty(loginId) || string.IsNullOrEmpty(password))
+            return (null, "Login ID and password are required.");
+
         AppUser? user = null;
 
         if (loginId.Contains('@', StringComparison.Ordinal))
         {
-            // Admin / Financial Officer (or customer email)
+            // Admin / Financial Officer / Customer email
             user = await userManager.FindByEmailAsync(loginId);
         }
         else
         {
-            // Customer login via Student/Staff number (Identity UserName)
+            // Customer login via Student/Staff number
             user = await userManager.FindByNameAsync(loginId);
             if (user is null)
             {
                 var customer = await context.Customers.AsNoTracking()
                     .FirstOrDefaultAsync(c => c.UserNumber == loginId);
+
                 if (customer is not null)
                     user = await userManager.FindByIdAsync(customer.AppUserId);
             }
         }
 
         if (user is null || !user.IsActive)
+            return (null, "Student/Staff number or email, or password is incorrect, or the account is inactive.");
+
+        var result = await signInManager.CheckPasswordSignInAsync(user, password, lockoutOnFailure: true);
+
+        if (!result.Succeeded)
+            return (null, "Student/Staff number or email, or password is incorrect.");
+
+        return (user, null);
+    }
+
+    // =====================================================================
+    //  WEBSITE (MVC) ACTIONS
+    // =====================================================================
+
+    [AllowAnonymous, HttpGet]
+    public IActionResult Login(string? returnUrl = null)
+        => View(new LoginModel { ReturnUrl = returnUrl });
+
+    [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Login(LoginModel model)
+    {
+        if (!ModelState.IsValid)
+            return View(model);
+
+        var (user, error) = await ValidateLoginAsync(model.LoginId, model.Password);
+
+        if (user is null)
         {
-            ModelState.AddModelError(string.Empty, "Student/Staff number or email, or password is incorrect, or the account is inactive.");
+            ModelState.AddModelError(string.Empty, error!);
             return View(model);
         }
 
-        var result = await signInManager.PasswordSignInAsync(user, model.Password, isPersistent: false, lockoutOnFailure: true);
-        if (!result.Succeeded)
-        {
-            ModelState.AddModelError(string.Empty, "Student/Staff number or email, or password is incorrect.");
-            return View(model);
-        }
+        // Create the cookie session for the website
+        await signInManager.SignInAsync(user, isPersistent: false);
 
         var roles = await userManager.GetRolesAsync(user);
-        if (roles.Contains(SystemRoles.Administrator)) return RedirectToAction("Index", "AdminHome");
-        if (roles.Contains(SystemRoles.FinancialOfficer)) return RedirectToAction("Dashboard", "Payment");
+
+        if (roles.Contains(SystemRoles.Administrator))
+            return RedirectToAction("Index", "AdminHome");
+
+        if (roles.Contains(SystemRoles.FinancialOfficer))
+            return RedirectToAction("Dashboard", "Payment");
+
         return LocalRedirect(model.ReturnUrl ?? Url.Action("Index", "Customer")!);
     }
 
@@ -96,29 +125,19 @@ public class AccountController(
 
             if (model.Category == CustomerCategory.Staff)
             {
-                // Staff Number: exactly 7 digits, must start with 0 (e.g. 0123456) — strict
                 if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^0\d{6}$"))
-                {
-                    ModelState.AddModelError(nameof(model.UserNumber),
-                        "Staff Number is invalid");
-                }
+                    ModelState.AddModelError(nameof(model.UserNumber), "Staff Number is invalid");
             }
             else if (model.Category == CustomerCategory.Student)
             {
-                // Student Number: exactly 10 digits
                 if (!System.Text.RegularExpressions.Regex.IsMatch(number, @"^\d{10}$"))
-                {
-                    ModelState.AddModelError(nameof(model.UserNumber),
-                        "Student Number is invalid");
-                }
+                    ModelState.AddModelError(nameof(model.UserNumber), "Student Number is invalid");
             }
 
-            var existsNumber = await context.Customers.AnyAsync(c => c.UserNumber == number);
-            if (existsNumber)
+            if (await context.Customers.AnyAsync(c => c.UserNumber == number))
                 ModelState.AddModelError(nameof(model.UserNumber), $"This {numberLabel} is already registered.");
 
-            var existsUserName = await userManager.FindByNameAsync(number);
-            if (existsUserName is not null)
+            if (await userManager.FindByNameAsync(number) is not null)
                 ModelState.AddModelError(nameof(model.UserNumber), $"This {numberLabel} is already registered.");
         }
 
@@ -128,50 +147,32 @@ public class AccountController(
 
             if (model.Category == CustomerCategory.Staff)
             {
-                // Staff email: letters only before @, must end exactly with @ufs.ac.za
-                // Examples: sefakol@ufs.ac.za, sefakoLP@ufs.ac.za
                 if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^[A-Za-z]+@ufs\.ac\.za$"))
-                {
-                    ModelState.AddModelError(
-                        nameof(model.Email),
-                        "Incorrect Email");
-                }
+                    ModelState.AddModelError(nameof(model.Email), "Incorrect Email");
             }
             else if (model.Category == CustomerCategory.Student)
             {
-                // Student email: digits only before @, must end exactly with @ufs4life.ac.za
                 if (!System.Text.RegularExpressions.Regex.IsMatch(email, @"^\d+@ufs4life\.ac\.za$"))
-                {
-                    ModelState.AddModelError(
-                        nameof(model.Email),
-                        "Incorrect Email");
-                }
+                    ModelState.AddModelError(nameof(model.Email), "Incorrect Email");
             }
 
-            var existsEmail = await userManager.FindByEmailAsync(email);
-            if (existsEmail is not null)
-            {
-                ModelState.AddModelError(
-                    nameof(model.Email),
-                    "This email address is already registered.");
-            }
+            if (await userManager.FindByEmailAsync(email) is not null)
+                ModelState.AddModelError(nameof(model.Email), "This email address is already registered.");
         }
 
-        // IMPORTANT: re-check ModelState after all custom validation above.
-        // Without this, errors added by AddModelError were being ignored and
-        // the account was created anyway (this was the bug).
-        if (!ModelState.IsValid) return View(model);
+        // Re-check after all custom validation
+        if (!ModelState.IsValid)
+            return View(model);
 
         var firstName = model.Name.Trim();
         var lastName = model.Surname.Trim();
         var fullName = $"{firstName} {lastName}".Trim();
-
         var userNumber = model.UserNumber.Trim();
         var registeredEmail = model.Email.Trim();
 
         var user = new AppUser
         {
-            UserName = userNumber, // login with User Number
+            UserName = userNumber,
             Email = registeredEmail,
             FirstName = firstName,
             LastName = lastName,
@@ -181,7 +182,8 @@ public class AccountController(
         var result = await userManager.CreateAsync(user, model.Password);
         if (!result.Succeeded)
         {
-            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
+            foreach (var error in result.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
         }
 
@@ -193,6 +195,7 @@ public class AccountController(
             Category = model.Category!.Value,
             UserNumber = userNumber
         };
+
         context.Customers.Add(customer);
         await context.SaveChangesAsync();
 
@@ -205,7 +208,7 @@ public class AccountController(
         }
         catch
         {
-            // in-app notification is best-effort at registration
+            // best-effort notification
         }
 
         await signInManager.SignInAsync(user, isPersistent: false);
@@ -216,15 +219,21 @@ public class AccountController(
     [AllowAnonymous, HttpGet]
     public async Task<IActionResult> InitialAdmin()
     {
-        if (await context.Users.AnyAsync()) return RedirectToAction(nameof(Login));
+        if (await context.Users.AnyAsync())
+            return RedirectToAction(nameof(Login));
+
         return View(new AdministratorSetupModel());
     }
 
     [AllowAnonymous, HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> InitialAdmin(AdministratorSetupModel model)
     {
-        if (await context.Users.AnyAsync()) return RedirectToAction(nameof(Login));
-        if (!ModelState.IsValid) return View(model);
+        if (await context.Users.AnyAsync())
+            return RedirectToAction(nameof(Login));
+
+        if (!ModelState.IsValid)
+            return View(model);
+
         foreach (var role in SystemRoles.All)
         {
             if (!await roleManager.RoleExistsAsync(role))
@@ -232,11 +241,13 @@ public class AccountController(
                 var roleResult = await roleManager.CreateAsync(new IdentityRole(role));
                 if (!roleResult.Succeeded)
                 {
-                    foreach (var error in roleResult.Errors) ModelState.AddModelError(string.Empty, error.Description);
+                    foreach (var error in roleResult.Errors)
+                        ModelState.AddModelError(string.Empty, error.Description);
                     return View(model);
                 }
             }
         }
+
         var admin = new AppUser
         {
             UserName = model.Email,
@@ -246,14 +257,18 @@ public class AccountController(
             LastName = model.LastName,
             IsStaffCreation = true
         };
+
         var create = await userManager.CreateAsync(admin, model.Password);
         if (!create.Succeeded)
         {
-            foreach (var error in create.Errors) ModelState.AddModelError(string.Empty, error.Description);
+            foreach (var error in create.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
             return View(model);
         }
+
         await userManager.AddToRoleAsync(admin, SystemRoles.Administrator);
         await signInManager.SignInAsync(admin, false);
+
         TempData["Success"] = "Initial administrator created. You can now add financial officers.";
         return RedirectToAction("Index", "AdminHome");
     }
@@ -267,4 +282,119 @@ public class AccountController(
 
     [AllowAnonymous]
     public IActionResult AccessDenied() => View();
+
+    // =====================================================================
+    //  JSON API FOR ANDROID APP
+    // =====================================================================
+
+    public record ApiLoginRequest(string LoginId, string Password);
+
+    public record ApiRegisterRequest(
+        string Category,
+        string UserNumber,
+        string Name,
+        string Surname,
+        string Email,
+        string Password,
+        string ConfirmPassword);
+
+    [AllowAnonymous, HttpPost("api/auth/login")]
+    public async Task<IActionResult> ApiLogin([FromBody] ApiLoginRequest req)
+    {
+        var (user, error) = await ValidateLoginAsync(req.LoginId, req.Password);
+
+        if (user is null)
+            return Unauthorized(new { success = false, message = error });
+
+        var roles = await userManager.GetRolesAsync(user);
+
+        var role = roles.Contains(SystemRoles.Administrator) ? SystemRoles.Administrator
+                 : roles.Contains(SystemRoles.FinancialOfficer) ? SystemRoles.FinancialOfficer
+                 : SystemRoles.Customer;
+
+        return Ok(new
+        {
+            success = true,
+            role,
+            userId = user.Id,
+            name = user.FirstName,
+            surname = user.LastName
+        });
+    }
+
+    [AllowAnonymous, HttpPost("api/auth/register")]
+    public async Task<IActionResult> ApiRegister([FromBody] ApiRegisterRequest req)
+    {
+        if (!await context.Roles.AnyAsync())
+            return BadRequest(new { success = false, message = "Initial administrator setup must be completed first." });
+
+        if (!Enum.TryParse<CustomerCategory>(req.Category, true, out var category))
+            return BadRequest(new { success = false, message = "Please select Student or Staff." });
+
+        var number = (req.UserNumber ?? "").Trim();
+        var email = (req.Email ?? "").Trim();
+        var label = category == CustomerCategory.Staff ? "Staff Number" : "Student Number";
+
+        if (category == CustomerCategory.Staff && !System.Text.RegularExpressions.Regex.IsMatch(number, @"^0\d{6}$"))
+            return BadRequest(new { success = false, message = "Staff Number is invalid" });
+
+        if (category == CustomerCategory.Student && !System.Text.RegularExpressions.Regex.IsMatch(number, @"^\d{10}$"))
+            return BadRequest(new { success = false, message = "Student Number is invalid" });
+
+        if (category == CustomerCategory.Staff && !System.Text.RegularExpressions.Regex.IsMatch(email, @"^[A-Za-z]+@ufs\.ac\.za$"))
+            return BadRequest(new { success = false, message = "Incorrect Email" });
+
+        if (category == CustomerCategory.Student && !System.Text.RegularExpressions.Regex.IsMatch(email, @"^\d+@ufs4life\.ac\.za$"))
+            return BadRequest(new { success = false, message = "Incorrect Email" });
+
+        if (string.IsNullOrWhiteSpace(req.Name) || string.IsNullOrWhiteSpace(req.Surname))
+            return BadRequest(new { success = false, message = "Name and surname are required." });
+
+        if (req.Password != req.ConfirmPassword)
+            return BadRequest(new { success = false, message = "Passwords do not match." });
+
+        if (await context.Customers.AnyAsync(c => c.UserNumber == number)
+            || await userManager.FindByNameAsync(number) is not null)
+            return Conflict(new { success = false, message = $"This {label} is already registered." });
+
+        if (await userManager.FindByEmailAsync(email) is not null)
+            return Conflict(new { success = false, message = "This email address is already registered." });
+
+        var user = new AppUser
+        {
+            UserName = number,
+            Email = email,
+            FirstName = req.Name.Trim(),
+            LastName = req.Surname.Trim(),
+            EmailConfirmed = false
+        };
+
+        var created = await userManager.CreateAsync(user, req.Password);
+        if (!created.Succeeded)
+            return BadRequest(new
+            {
+                success = false,
+                message = string.Join(" ", created.Errors.Select(e => e.Description))
+            });
+
+        await userManager.AddToRoleAsync(user, SystemRoles.Customer);
+
+        context.Customers.Add(new Customer
+        {
+            AppUserId = user.Id,
+            Category = category,
+            UserNumber = number
+        });
+
+        await context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            success = true,
+            role = SystemRoles.Customer,
+            userId = user.Id,
+            name = user.FirstName,
+            surname = user.LastName
+        });
+    }
 }

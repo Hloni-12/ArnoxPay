@@ -1,0 +1,50 @@
+@model ArnoxPay.Models.ViewModels.VehicleFeePaymentForm
+@{
+    ViewData["Title"] = "Vehicle registration fee";
+    var vehicles = ViewBag.Vehicles as List<ArnoxPay.Models.Vehicle> ?? new();
+    var subsequent = ViewBag.SubsequentFee as decimal?;
+}
+<div class="container py-3" style="max-width:720px">
+    <a class="btn-arnox btn-arnox-outline btn-arnox-sm mb-3" asp-action="Hub"><i class="fa-solid fa-arrow-left"></i> Services</a>
+    <h1 class="page-title h3 mb-1">Vehicle registration fee</h1>
+    <p class="text-muted mb-3">The <strong>first</strong> vehicle is included at <strong>R0.00</strong>. Second and subsequent vehicles use the configured fee@(subsequent.HasValue ? $" ({subsequent.Value:C})" : " (not configured)").</p>
+
+    @if (!vehicles.Any())
+    {
+        <div class="alert alert-warning">No vehicles registered. <a asp-controller="Vehicle" asp-action="Index">Register a vehicle</a>.</div>
+    }
+    else
+    {
+        <form method="post" asp-action="VehicleFee">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="row g-3 mb-4">
+                @{ var i = 0; }
+                @foreach (var v in vehicles)
+                {
+                    i++;
+                    var pos = i == 1 ? "First vehicle (R0.00)" : i == 2 ? "Second vehicle" : $"Vehicle #{i}";
+                    var disabled = i == 1;
+                    <div class="col-12 col-md-6">
+                        <label class="svc-vehicle-card @(disabled ? "opacity-75" : "")">
+                            <input type="radio" name="VehicleId" value="@v.Id" class="form-check-input me-2"
+                                   @(disabled ? "disabled" : "required") @(Model.VehicleId == v.Id ? "checked" : "") />
+                            <span>
+                                <strong class="d-block">@v.RegistrationNumber</strong>
+                                <span class="small text-muted">@pos · @v.Make @v.Model</span>
+                            </span>
+                        </label>
+                    </div>
+                }
+            </div>
+            @if (vehicles.Count >= 2 && subsequent.HasValue)
+            {
+                <div class="alert alert-light border">Applicable fee for second/subsequent vehicle: <strong>@subsequent.Value.ToString("C")</strong></div>
+            }
+            <div class="d-flex flex-wrap gap-2">
+                <button type="submit" name="action" value="add" class="btn-arnox btn-arnox-outline" @(vehicles.Count < 2 ? "disabled" : null)>Add another service</button>
+                <button type="submit" name="action" value="checkout" class="btn-arnox btn-arnox-primary" @(vehicles.Count < 2 ? "disabled" : null)>Review &amp; checkout</button>
+            </div>
+        </form>
+    }
+</div>

@@ -23,4 +23,8 @@ public sealed class CheckoutLineItem
     public string? VehicleRegistration { get; init; }
     public string? OutstandingChargeKey { get; init; }
     public string? AccountReference { get; init; }
+    public decimal? Quantity { get; init; }
+    public decimal? UnitPrice { get; init; }
+    public string? UnitOfMeasure { get; init; }
+    public int? AccommodationId { get; init; }
 }

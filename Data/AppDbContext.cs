@@ -156,9 +156,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
         builder.Entity<PaymentItem>(e =>
         {
             e.Property(x => x.Amount).HasColumnType("decimal(18,2)");
+            e.Property(x => x.Quantity).HasColumnType("decimal(18,4)");
+            e.Property(x => x.UnitPrice).HasColumnType("decimal(18,4)");
             e.HasIndex(x => x.OutstandingChargeKey);
             e.HasOne(x => x.Payment).WithMany(x => x.Items).HasForeignKey(x => x.PaymentId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Vehicle).WithMany().HasForeignKey(x => x.VehicleId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(x => x.Accomodation).WithMany().HasForeignKey(x => x.AccomodationId).OnDelete(DeleteBehavior.SetNull);
         });
         builder.Entity<CampusAccount>(e =>
         {

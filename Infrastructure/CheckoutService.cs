@@ -101,7 +101,11 @@ public sealed class CheckoutService(AppDbContext context, IPaymentGateway gatewa
                     ? $"Parking - {item.VehicleRegistration}" : item.PaymentType.ToString()),
                 VehicleId = item.VehicleId,
                 VehicleRegistration = item.VehicleRegistration,
-                OutstandingChargeKey = item.OutstandingChargeKey
+                OutstandingChargeKey = item.OutstandingChargeKey,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                UnitOfMeasure = item.UnitOfMeasure,
+                AccomodationId = item.AccommodationId
             });
         }
         context.Payments.Add(payment);

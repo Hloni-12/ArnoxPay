@@ -13,17 +13,38 @@
 
         <div class="table-responsive mb-4">
             <table class="table">
-                <thead><tr><th>Item</th><th class="text-end">Amount</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Quantity</th>
+                        <th>Unit price</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                </thead>
                 <tbody>
                     @foreach (var item in items)
                     {
                         <tr>
                             <td>@(item.Description ?? item.PaymentType.ToString())</td>
+                            <td>
+                                @if (item.Quantity.HasValue)
+                                {
+                                    @($"{item.Quantity.Value:0.####} {item.UnitOfMeasure}")
+                                }
+                                else { <span class="text-muted">—</span> }
+                            </td>
+                            <td>
+                                @if (item.UnitPrice.HasValue)
+                                {
+                                    @($"{item.UnitPrice.Value:C}" + (string.IsNullOrEmpty(item.UnitOfMeasure) ? "" : $" / {item.UnitOfMeasure}"))
+                                }
+                                else { <span class="text-muted">—</span> }
+                            </td>
                             <td class="text-end">R @item.Amount.ToString("N2")</td>
                         </tr>
                     }
-                    <tr><td>Transaction fee</td><td class="text-end">R0.00</td></tr>
-                    <tr class="fw-bold"><td>Total</td><td class="text-end">R @Model.Amount.ToString("N2")</td></tr>
+                    <tr><td colspan="3">Transaction fee</td><td class="text-end">R0.00</td></tr>
+                    <tr class="fw-bold"><td colspan="3">Total</td><td class="text-end">R @Model.Amount.ToString("N2")</td></tr>
                 </tbody>
             </table>
         </div>

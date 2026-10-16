@@ -1,6 +1,14 @@
 @model DashboardViewModel
 @{
     ViewData["Title"] = "Financial operations";
+    decimal pendingTotal = ViewBag.PendingTotal is decimal pt ? pt : 0m;
+    int rejectedCount = ViewBag.RejectedCount is int rc ? rc : 0;
+    decimal rejectedTotal = ViewBag.RejectedTotal is decimal rt ? rt : 0m;
+    decimal elec = ViewBag.ElectricityRevenue is decimal e ? e : 0m;
+    decimal water = ViewBag.WaterRevenue is decimal w ? w : 0m;
+    decimal rent = ViewBag.RentRevenue is decimal r ? r : 0m;
+    decimal veh = ViewBag.VehicleRevenue is decimal v ? v : 0m;
+    decimal other = ViewBag.OtherRevenue is decimal o ? o : 0m;
 }
 
 <section class="fx-welcome mb-4">
@@ -10,41 +18,145 @@
     </div>
 </section>
 
+<div class="alert alert-primary border-0 shadow-sm mb-4 d-flex align-items-start gap-3" role="alert">
+    <i class="fa-solid fa-sparkles mt-1"></i>
+    <div>
+        <strong>Enhanced Financial Officer view</strong>
+        <div class="small mb-0">Summary cards include accepted, pending, and rejected totals plus revenue by service.
+        Use <strong>Reports &amp; Excel</strong> below (or the Reports menu) to filter payments and download a real .xlsx spreadsheet.</div>
+    </div>
+</div>
+
 <div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Customers</div><div class="stat-value">@Model.ActiveCustomers</div></div></div>
-    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Pending</div><div class="stat-value">@Model.PendingPayments</div></div></div>
-    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Completed</div><div class="stat-value">@Model.AcceptedPayments</div></div></div>
-    <div class="col-6 col-lg-3"><div class="stat-card h-100"><div class="stat-label">Accepted value</div><div class="stat-value" style="font-size:1.25rem">@Model.AcceptedTotal.ToString("C")</div></div></div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card h-100">
+            <div class="stat-label">Accepted payments</div>
+            <div class="stat-value">@Model.AcceptedPayments</div>
+            <div class="small text-success">@Model.AcceptedTotal.ToString("C") collected</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card h-100">
+            <div class="stat-label">Pending approval</div>
+            <div class="stat-value">@Model.PendingPayments</div>
+            <div class="small text-warning">@pendingTotal.ToString("C") awaiting</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card h-100">
+            <div class="stat-label">Rejected / Failed</div>
+            <div class="stat-value">@rejectedCount</div>
+            <div class="small text-danger">@rejectedTotal.ToString("C")</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="stat-card h-100">
+            <div class="stat-label">Active customers</div>
+            <div class="stat-value">@Model.ActiveCustomers</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-lg">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body py-3">
+            <div class="text-muted small">Electricity revenue</div>
+            <div class="fw-bold text-primary">@elec.ToString("C")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body py-3">
+            <div class="text-muted small">Water revenue</div>
+            <div class="fw-bold text-primary">@water.ToString("C")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body py-3">
+            <div class="text-muted small">Rent revenue</div>
+            <div class="fw-bold text-primary">@rent.ToString("C")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body py-3">
+            <div class="text-muted small">Vehicle-related fees</div>
+            <div class="fw-bold text-primary">@veh.ToString("C")</div>
+        </div></div>
+    </div>
+    <div class="col-6 col-md-4 col-lg">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body py-3">
+            <div class="text-muted small">Other services</div>
+            <div class="fw-bold text-primary">@other.ToString("C")</div>
+        </div></div>
+    </div>
 </div>
 
 <div class="fx-command mb-4">
-    <a class="fx-action" asp-controller="Payment" asp-action="Customers"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i><span>Find customer</span></a>
-    <a class="fx-action" asp-controller="Payment" asp-action="Index"><i class="fa-solid fa-clipboard-check" aria-hidden="true"></i><span>View payments</span></a>
-    <a class="fx-action" asp-controller="AdminReport" asp-action="Index"><i class="fa-solid fa-file-invoice" aria-hidden="true"></i><span>Generate report</span></a>
-    <a class="fx-action" asp-controller="Payment" asp-action="Customers"><i class="fa-solid fa-headset" aria-hidden="true"></i><span>Assist customer</span></a>
-    <a class="fx-action" asp-controller="Reviews" asp-action="Index"><i class="fa-solid fa-star" aria-hidden="true"></i><span>Reviews</span></a>
+    <a class="fx-action" asp-controller="Payment" asp-action="Customers">
+        <i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+        <span>Find customer</span>
+    </a>
+    <a class="fx-action" asp-controller="Payment" asp-action="Index">
+        <i class="fa-solid fa-clipboard-check" aria-hidden="true"></i>
+        <span>View payments</span>
+    </a>
+    <a class="fx-action" asp-controller="AdminReport" asp-action="Index">
+        <i class="fa-solid fa-file-invoice-dollar" aria-hidden="true"></i>
+        <span>Reports &amp; Excel</span>
+    </a>
+    <a class="fx-action" asp-controller="Payment" asp-action="Customers">
+        <i class="fa-solid fa-headset" aria-hidden="true"></i>
+        <span>Assist customer</span>
+    </a>
+    <a class="fx-action" asp-controller="Reviews" asp-action="Index">
+        <i class="fa-solid fa-star" aria-hidden="true"></i>
+        <span>Reviews</span>
+    </a>
 </div>
 
 <section class="content-card">
-    <h2 class="h5 fw-bold mb-3">Recent payment activity</h2>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+        <h2 class="h5 fw-bold mb-0">Recent payment activity</h2>
+        <a class="btn-arnox btn-arnox-primary btn-arnox-sm" asp-controller="AdminReport" asp-action="Index">
+            <i class="fa-solid fa-chart-line"></i> Full reports
+        </a>
+    </div>
     @if (Model.RecentPayments.Any())
     {
-        <ul class="fx-timeline">
-        @foreach (var p in Model.RecentPayments)
-        {
-            var dot = p.Status == PaymentStatus.Accepted ? "ok" : p.Status == PaymentStatus.Rejected ? "fail" : "wait";
-            var pItems = p.Items?.ToList() ?? new List<PaymentItem>();
-            var pServiceLabel = pItems.Count > 1 ? "Multiple Services" : p.PaymentType.ToString();
-            <li>
-                <span class="fx-dot @dot" aria-hidden="true"></span>
-                <div>
-                    <div class="title">@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName · @pServiceLabel</div>
-                    <div class="meta">@p.SubmittedAtUtc.ToString("dd MMM yyyy HH:mm") · @p.Status</div>
-                </div>
-                <div class="amount">@p.Amount.ToString("C")</div>
-            </li>
-        }
-        </ul>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Customer</th>
+                        <th>Reference</th>
+                        <th>Service</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var p in Model.RecentPayments)
+                {
+                    var pItems = p.Items?.ToList() ?? new List<PaymentItem>();
+                    var pServiceLabel = pItems.Count > 1 ? "Multiple Services" : p.PaymentType.ToString();
+                    <tr>
+                        <td>@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName</td>
+                        <td><code>@p.TransactionReference</code></td>
+                        <td>@pServiceLabel</td>
+                        <td class="fw-semibold">@p.Amount.ToString("C")</td>
+                        <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
+                        <td>@p.SubmittedAtUtc.ToLocalTime().ToString("g")</td>
+                        <td>
+                            <a class="btn-arnox btn-arnox-primary btn-arnox-sm" asp-action="Details" asp-route-id="@p.Id">
+                                <i class="fa-solid fa-eye"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
     }
     else
     {

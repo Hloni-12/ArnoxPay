@@ -111,7 +111,8 @@ public class CustomerController(AppDbContext context, UserManager<AppUser> userM
             return RedirectToAction(nameof(Permit));
         }
 
-        if (fee < 0) fee = 0;
+        // Parking permit applications are free of charge. Do not create a payment transaction.
+        fee = 0m;
         var number = $"AP-{DateTime.UtcNow:yyyy}-{Random.Shared.Next(10000, 99999)}";
         context.ParkingPermits.Add(new ParkingPermit
         {
@@ -122,12 +123,11 @@ public class CustomerController(AppDbContext context, UserManager<AppUser> userM
             IssueDate = DateTime.UtcNow.Date,
             ExpiryDate = DateTime.UtcNow.Date.AddYears(1),
             Status = ParkingPermitStatus.PendingApproval,
-            Fee = fee,
+            Fee = 0m,
             AppliedAtUtc = DateTime.UtcNow
-        }
-        );
+        });
         await context.SaveChangesAsync();
-        TempData["Success"] = "Permit application submitted. An administrator will review it.";
+        TempData["Success"] = "Permit application submitted free of charge (R0.00). Status: Pending approval. An authorised officer will review it.";
         return RedirectToAction(nameof(Permit));
     }
 

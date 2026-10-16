@@ -1,47 +1,173 @@
 @model List<Payment>
+@using ArnoxPay.Infrastructure
 @{
- ViewData["Title"] = "Payment reports"; 
- var total = Model.Where(x => x.Status == PaymentStatus.Accepted).Sum(x => x.Amount); 
- }
- 
- <div class="d-flex justify-content-between align-items-end mb-4">
-	 <div>
-		 <h1 class="page-title h2 mb-1">Payment reports</h1>
-		 <p class="text-muted mb-0">All payment requests, decisions, and transactions.</p>
-	 </div>
-	 <div class="h3 text-primary mb-0">@total.ToString("C")</div>
+    ViewData["Title"] = "Financial Reports & Records";
+    var summary = ViewBag.Summary as FinancialReportSummary;
+}
+
+<div class="d-flex flex-wrap justify-content-between align-items-end mb-4 gap-3">
+    <div>
+        <h1 class="page-title h2 mb-1">Financial Reports &amp; Records</h1>
+        <p class="text-muted mb-0">Official application-generated payment evidence for management and auditors. Totals reflect database status only.</p>
+    </div>
+    <div class="btn-group-arnox">
+        <a class="btn-arnox btn-arnox-success"
+           asp-action="DownloadExcel"
+           asp-route-from="@ViewBag.From"
+           asp-route-to="@ViewBag.To"
+           asp-route-status="@ViewBag.Status"
+           asp-route-paymentType="@ViewBag.PaymentType"
+           asp-route-search="@ViewBag.Search"
+           asp-route-transactionReference="@ViewBag.TransactionReference">
+            <i class="fa-solid fa-file-excel"></i> Download Excel Report
+        </a>
+    </div>
 </div>
-	 <section class="content-card p-0 overflow-hidden">@if(Model.Any())
-		 {
-			 <div class="table-responsive">
-				 <table class="table table-hover mb-0">
-					 <thead>
-						 <tr>
-							 <th>ID</th>
-							 <th>Customer</th>
-							 <th>Service</th>
-							 <th>Amount</th>
-							 <th>Status</th>
-							 <th>Officer</th>
-							 <th>Transaction</th>
-						 </tr>
-					</thead>
-					<tbody>@foreach(var p in Model)
-						{
-							<tr>
-								<td>#@p.Id</td>
-								<td>@p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName</td>
-								<td>@p.PaymentType</td>
-								<td>@p.Amount.ToString("C")</td>
-								<td><partial name="_StatusBadge" model="@p.Status.ToString()"/></td>
-								<td>@p.FinancialOfficer?.AppUser?.FirstName @p.FinancialOfficer?.AppUser?.LastName</td>
-								<td>@p.Transaction?.TransactionReference</td>
-							</tr>
-						}
-					</tbody>
-				</table>
-			</div>
-		} else {
-			<div class="empty-state">No payment records available.</div>
-		}
-	</section>
+
+
+<div class="alert alert-success border-0 shadow-sm mb-4">
+    <strong><i class="fa-solid fa-file-excel me-1"></i> Excel financial reports are available</strong>
+    <div class="small">Filter by date, status, or service, then click <strong>Download Excel Report</strong> for a real .xlsx file with transaction detail and financial summary worksheets.</div>
+</div>
+
+@if (summary != null)
+{
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Accepted (collected)</div>
+                    <div class="fs-4 fw-bold text-success">@summary.TotalAccepted.ToString("C")</div>
+                    <div class="small">@summary.AcceptedCount transactions · @summary.UniqueCustomersPaid customers</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Pending approval</div>
+                    <div class="fs-4 fw-bold text-warning">@summary.TotalPending.ToString("C")</div>
+                    <div class="small">@summary.PendingCount transactions</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">Rejected / Failed</div>
+                    <div class="fs-4 fw-bold text-danger">@summary.TotalRejectedOrFailed.ToString("C")</div>
+                    <div class="small">@summary.RejectedOrFailedCount transactions</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small">By service (accepted)</div>
+                    <div class="small">Elec: @summary.ElectricityTotal.ToString("C")</div>
+                    <div class="small">Water: @summary.WaterTotal.ToString("C")</div>
+                    <div class="small">Rent: @summary.RentTotal.ToString("C") · Veh: @summary.VehicleFeesTotal.ToString("C")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<section class="content-card p-4 mb-4">
+    <h2 class="h5 mb-3">Filters</h2>
+    <form method="get" class="row g-3">
+        <div class="col-md-2">
+            <label class="form-label">From</label>
+            <input type="date" name="from" value="@(ViewBag.From as DateTime?)" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">To</label>
+            <input type="date" name="to" value="@(ViewBag.To as DateTime?)" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select" asp-items="ViewBag.StatusList">
+                <option value="">All statuses</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Service type</label>
+            <select name="paymentType" class="form-select" asp-items="ViewBag.PaymentTypeList">
+                <option value="">All services</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Search</label>
+            <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Name, number, ref" />
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Payment reference</label>
+            <input type="text" name="transactionReference" value="@ViewBag.TransactionReference" class="form-control" />
+        </div>
+        <div class="col-12 btn-group-arnox">
+            <button type="submit" class="btn-arnox btn-arnox-primary">
+                <i class="fa-solid fa-filter"></i> Apply filters
+            </button>
+            <a asp-action="Index" class="btn-arnox btn-arnox-outline">
+                <i class="fa-solid fa-xmark"></i> Clear
+            </a>
+        </div>
+    </form>
+</section>
+
+<section class="content-card p-0 overflow-hidden">
+    @if (Model.Any())
+    {
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Reference</th>
+                        <th>Customer</th>
+                        <th>Service</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th>Submitted</th>
+                        <th>Officer</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in Model)
+                    {
+                        <tr>
+                            <td>#@p.Id</td>
+                            <td><code>@p.TransactionReference</code></td>
+                            <td>
+                                @p.Customer?.AppUser?.FirstName @p.Customer?.AppUser?.LastName
+                                <div class="small text-muted">@p.Customer?.UserNumber</div>
+                            </td>
+                            <td>
+                                @p.PaymentType
+                                @if (p.Items?.Count > 1)
+                                {
+                                    <span class="badge bg-secondary">@p.Items.Count items</span>
+                                }
+                            </td>
+                            <td class="fw-semibold">@p.Amount.ToString("C")</td>
+                            <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
+                            <td>@p.SubmittedAtUtc.ToLocalTime().ToString("g")</td>
+                            <td>@p.FinancialOfficer?.AppUser?.FirstName @p.FinancialOfficer?.AppUser?.LastName</td>
+                            <td>
+                                <a class="btn-arnox btn-arnox-primary btn-arnox-sm" asp-controller="Payment" asp-action="Details" asp-route-id="@p.Id">
+                                    <i class="fa-solid fa-eye"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="p-3 small text-muted">Showing up to 500 matching records. Download Excel for the full filtered set and financial summary worksheets.</div>
+    }
+    else
+    {
+        <div class="empty-state p-5">No payment records match the selected filters.</div>
+    }
+</section>

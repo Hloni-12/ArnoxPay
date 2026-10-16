@@ -8,11 +8,25 @@ var builder = WebApplication.CreateBuilder(args);
 
 // MVC
 builder.Services.AddControllersWithViews();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+builder.Services.AddControllers(); // JSON API for mobile clients
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MobileApp", policy =>
+        policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
+});
 
 // Database
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
     options.ConfigureWarnings(w =>
         w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
 });
@@ -27,6 +41,9 @@ builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IPaymentGateway, InternalPaymentProcessor>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<ICampusAccountService, CampusAccountService>();
+builder.Services.AddScoped<IFinancialReportService, FinancialReportService>();
+builder.Services.Configure<FeeSettings>(builder.Configuration.GetSection("FeeSettings"));
+builder.Services.AddScoped<IServiceCartStore, ServiceCartStore>();
 
 // Routing (lowercase URLs)
 builder.Services.AddRouting(options =>
@@ -66,6 +83,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
     options.ExpireTimeSpan = TimeSpan.FromHours(8);
 });
+
 
 var app = builder.Build();
 
@@ -110,9 +128,12 @@ else
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseCors("MobileApp");
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapControllers();
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

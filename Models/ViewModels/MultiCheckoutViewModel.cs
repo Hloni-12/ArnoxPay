@@ -7,6 +7,15 @@ public class MultiCheckoutViewModel
     public List<SelectableCharge> Charges { get; set; } = new();
     public string? Notes { get; set; }
     public string IdempotencyKey { get; set; } = Guid.NewGuid().ToString("N");
+
+    /// <summary>Customer accommodation label for utility line items.</summary>
+    public string? AccommodationDisplay { get; set; }
+    public int? AccommodationId { get; set; }
+
+    public decimal? ElectricityPricePerKwh { get; set; }
+    public decimal? WaterPricePerKl { get; set; }
+    public decimal MaxElectricityUnits { get; set; } = 5000m;
+    public decimal MaxWaterUnits { get; set; } = 50m;
 }
 
 public class SelectableCharge
@@ -19,6 +28,17 @@ public class SelectableCharge
     public string? OutstandingChargeKey { get; set; }
     public bool Selected { get; set; }
     public bool AlreadyPaid { get; set; }
+
+    /// <summary>True for Electricity / Water — amount is calculated from units × unit price.</summary>
+    public bool RequiresUnits { get; set; }
+
+    /// <summary>Number of units (kWh or kL).</summary>
+    public decimal? Quantity { get; set; }
+
+    public decimal? UnitPrice { get; set; }
+    public string? UnitOfMeasure { get; set; }
+    public string? AccommodationLabel { get; set; }
+    public int? AccommodationId { get; set; }
 }
 
 public class CardPaymentFormModel

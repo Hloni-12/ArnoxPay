@@ -1,0 +1,101 @@
+@model ArnoxPay.Models.ViewModels.ServiceHubViewModel
+@{
+    ViewData["Title"] = "Pay for services";
+}
+<div class="container py-3" style="max-width:1100px">
+    <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mb-4">
+        <div>
+            <p class="eyebrow mb-1">ArnoxPay</p>
+            <h1 class="page-title h2 mb-1">Choose a service</h1>
+            <p class="text-muted mb-0">
+                Select one service at a time. You can add more before checkout.
+                @if (!string.IsNullOrWhiteSpace(Model.AccommodationDisplay))
+                {
+                    <span class="d-block mt-1"><i class="fa-solid fa-building me-1"></i>@Model.AccommodationDisplay</span>
+                }
+            </p>
+        </div>
+        @if (Model.CartCount > 0)
+        {
+            <a class="btn-arnox btn-arnox-primary" asp-action="Cart">
+                <i class="fa-solid fa-basket-shopping"></i>
+                Checkout (@Model.CartCount) · @Model.CartTotal.ToString("C")
+            </a>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <div class="row g-3 g-md-4">
+        <div class="col-12 col-sm-6 col-lg-4">
+            <a class="svc-card text-decoration-none" asp-action="Rent">
+                <div class="svc-card-icon" style="background:#eef2ff;color:#4f46e5"><i class="fa-solid fa-house"></i></div>
+                <h2 class="h5 fw-bold mb-1">Rent</h2>
+                <p class="text-muted small mb-0">Pay rent for your assigned accommodation and billing period.</p>
+                <span class="svc-card-cta">Continue <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <a class="svc-card text-decoration-none" asp-action="Electricity">
+                <div class="svc-card-icon" style="background:#fef3c7;color:#d97706"><i class="fa-solid fa-bolt"></i></div>
+                <h2 class="h5 fw-bold mb-1">Electricity</h2>
+                <p class="text-muted small mb-0">Purchase kWh units for your residence.
+                    @if (Model.ElectricityTariff.HasValue)
+                    { <span class="d-block mt-1">From @Model.ElectricityTariff.Value.ToString("C") / kWh</span> }
+                </p>
+                <span class="svc-card-cta">Buy units <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <a class="svc-card text-decoration-none" asp-action="Water">
+                <div class="svc-card-icon" style="background:#e0f2fe;color:#0284c7"><i class="fa-solid fa-droplet"></i></div>
+                <h2 class="h5 fw-bold mb-1">Water</h2>
+                <p class="text-muted small mb-0">Purchase water (kL) for your residence.
+                    @if (Model.WaterTariff.HasValue)
+                    { <span class="d-block mt-1">From @Model.WaterTariff.Value.ToString("C") / kL</span> }
+                </p>
+                <span class="svc-card-cta">Buy units <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <a class="svc-card text-decoration-none" asp-action="Parking">
+                <div class="svc-card-icon" style="background:#f3e8ff;color:#7c3aed"><i class="fa-solid fa-square-parking"></i></div>
+                <h2 class="h5 fw-bold mb-1">Parking</h2>
+                <p class="text-muted small mb-0">Pay a parking charge for one of your registered vehicles.</p>
+                <span class="svc-card-cta">Select vehicle <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <a class="svc-card text-decoration-none" asp-action="VehicleFee">
+                <div class="svc-card-icon" style="background:#fee2e2;color:#dc2626"><i class="fa-solid fa-car"></i></div>
+                <h2 class="h5 fw-bold mb-1">Vehicle registration fee</h2>
+                <p class="text-muted small mb-0">First vehicle is free. Second and later vehicles use the configured fee
+                    (@Model.SubsequentVehicleFee.ToString("C")).</p>
+                <span class="svc-card-cta">Pay fee <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <a class="svc-card text-decoration-none" asp-action="Refuse">
+                <div class="svc-card-icon" style="background:#ecfdf5;color:#059669"><i class="fa-solid fa-recycle"></i></div>
+                <h2 class="h5 fw-bold mb-1">Refuse collection</h2>
+                <p class="text-muted small mb-0">Pay refuse or related accommodation charges for your unit.</p>
+                <span class="svc-card-cta">Continue <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-4">
+            <a class="svc-card text-decoration-none" asp-controller="Customer" asp-action="ApplyPermit">
+                <div class="svc-card-icon" style="background:#f1f5f9;color:#475569"><i class="fa-solid fa-id-card"></i></div>
+                <h2 class="h5 fw-bold mb-1">Parking permit</h2>
+                <p class="text-muted small mb-0">Apply for a permit free of charge (R0.00). No payment required.</p>
+                <span class="svc-card-cta text-success">Apply free <i class="fa-solid fa-arrow-right"></i></span>
+            </a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,57 @@
+@model ArnoxPay.Models.ViewModels.ParkingPaymentForm
+@{
+    ViewData["Title"] = "Parking payment";
+    var vehicles = ViewBag.Vehicles as List<ArnoxPay.Models.Vehicle> ?? new();
+}
+<div class="container py-3" style="max-width:720px">
+    <a class="btn-arnox btn-arnox-outline btn-arnox-sm mb-3" asp-action="Hub"><i class="fa-solid fa-arrow-left"></i> Services</a>
+    <h1 class="page-title h3 mb-1">Parking</h1>
+    <p class="text-muted mb-4">Select one of <strong>your</strong> registered vehicles, then enter the parking amount due.</p>
+
+    @if (!vehicles.Any())
+    {
+        <div class="alert alert-warning">You have no registered vehicles. <a asp-controller="Vehicle" asp-action="Index">Register a vehicle</a> first.</div>
+    }
+    else
+    {
+        <form method="post" asp-action="Parking">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+            <div class="row g-3 mb-4">
+                @{ var i = 0; }
+                @foreach (var v in vehicles)
+                {
+                    i++;
+                    var pos = i == 1 ? "First vehicle" : i == 2 ? "Second vehicle" : $"Vehicle #{i}";
+                    <div class="col-12 col-md-6">
+                        <label class="svc-vehicle-card">
+                            <input type="radio" name="VehicleId" value="@v.Id" class="form-check-input me-2" required @(Model.VehicleId == v.Id ? "checked" : "") />
+                            <span>
+                                <strong class="d-block">@v.RegistrationNumber</strong>
+                                <span class="small text-muted">@pos · @v.Make @v.Model</span>
+                            </span>
+                        </label>
+                    </div>
+                }
+            </div>
+            <div class="content-card p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" asp-for="Amount">Parking amount (ZAR)</label>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text">R</span>
+                        <input asp-for="Amount" class="form-control" type="number" min="0.01" step="0.01" />
+                    </div>
+                    <div class="form-text">This is a parking usage charge, separate from free permit applications and first-vehicle registration (R0).</div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" asp-for="Notes">Notes (optional)</label>
+                    <input asp-for="Notes" class="form-control" />
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="submit" name="action" value="add" class="btn-arnox btn-arnox-outline">Add another service</button>
+                    <button type="submit" name="action" value="checkout" class="btn-arnox btn-arnox-primary">Review &amp; checkout</button>
+                </div>
+            </div>
+        </form>
+    }
+</div>

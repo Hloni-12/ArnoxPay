@@ -1,103 +1,207 @@
 @model ArnoxPay.Models.ViewModels.MultiCheckoutViewModel
 @{
-    ViewData["Title"] = "Select payments";
+    ViewData["Title"] = "Review and pay";
+    var elecPrice = Model.ElectricityPricePerKwh ?? 0m;
+    var waterPrice = Model.WaterPricePerKl ?? 0m;
 }
-<div class="fx-pay-shell">
+<div class="fx-pay-shell" style="max-width:920px">
     <div class="content-card">
-        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 1 · Service selection</p>
-        <h1 class="page-title h3 mb-1">Select payments</h1>
-        <p class="text-muted mb-4">Choose the services or vehicles you want to pay for and enter the amount for each.</p>
+        <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Combined checkout</p>
+        <h1 class="page-title h3 mb-1">Select services and units</h1>
+        <p class="text-muted mb-3">
+            Pay for multiple items in one transaction. For <strong>electricity</strong> and <strong>water</strong>, enter the number of units;
+            the total is calculated from the configured tariff.
+        </p>
+
+        @if (!string.IsNullOrWhiteSpace(Model.AccommodationDisplay))
+        {
+            <div class="alert alert-light border mb-4">
+                <i class="fa-solid fa-building me-1 text-primary"></i>
+                <strong>Accommodation:</strong> @Model.AccommodationDisplay
+            </div>
+        }
 
         <form method="post" asp-action="SelectServices" id="multiForm">
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="IdempotencyKey" />
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="d-flex gap-2 mb-3">
-                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAll">Select all</button>
-                <button type="button" class="btn btn-sm btn-outline-secondary" id="btnNone">Deselect all</button>
-            </div>
-
-            <div class="list-group mb-4">
-                @for (var i = 0; i < Model.Charges.Count; i++)
-                {
-                    <div class="list-group-item @(Model.Charges[i].AlreadyPaid ? "list-group-item-success" : "")">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
-                            <label class="d-flex align-items-center mb-0 gap-2">
+            <div class="table-responsive mb-3">
+                <table class="table table-bordered align-middle mb-0" id="cartTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:42px"></th>
+                            <th>Item</th>
+                            <th>Accommodation / vehicle</th>
+                            <th>Quantity</th>
+                            <th>Unit price</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @for (var i = 0; i < Model.Charges.Count; i++)
+                    {
+                        var ch = Model.Charges[i];
+                        var isUtility = ch.RequiresUnits || ch.PaymentType is PaymentType.Electricity or PaymentType.Water;
+                        var unit = ch.UnitOfMeasure
+                            ?? (ch.PaymentType == PaymentType.Electricity ? "kWh"
+                                : ch.PaymentType == PaymentType.Water ? "kL" : "");
+                        var unitPrice = ch.UnitPrice
+                            ?? (ch.PaymentType == PaymentType.Electricity ? Model.ElectricityPricePerKwh
+                                : ch.PaymentType == PaymentType.Water ? Model.WaterPricePerKl : null);
+                        <tr class="charge-row @(ch.AlreadyPaid ? "table-success" : "")"
+                            data-requires-units="@(isUtility ? "true" : "false")"
+                            data-unit-price="@(unitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "0")">
+                            <td class="text-center">
                                 <input type="checkbox" class="form-check-input charge-cb"
                                        name="Charges[@i].Selected" value="true"
-                                       @(Model.Charges[i].Selected ? "checked" : "")
-                                       @(Model.Charges[i].AlreadyPaid ? "disabled" : "") />
-                                <span>
-                                    @Model.Charges[i].DisplayName
-                                    @if (Model.Charges[i].AlreadyPaid) { <span class="badge bg-success ms-1">Paid</span> }
-                                </span>
-                            </label>
-                            <div class="input-group" style="max-width: 180px;">
-                                <span class="input-group-text">R</span>
-                                <input type="number" class="form-control amount-input" min="0.01" step="0.01"
-                                       name="Charges[@i].Amount"
-                                       value="@(Model.Charges[i].Amount > 0 ? Model.Charges[i].Amount.ToString("0.##") : "")"
-                                       placeholder="0.00"
-                                       @(Model.Charges[i].AlreadyPaid ? "disabled" : "") />
-                            </div>
-                        </div>
-                        <input type="hidden" name="Charges[@i].PaymentType" value="@Model.Charges[i].PaymentType" />
-                        <input type="hidden" name="Charges[@i].DisplayName" value="@Model.Charges[i].DisplayName" />
-                        <input type="hidden" name="Charges[@i].VehicleId" value="@Model.Charges[i].VehicleId" />
-                        <input type="hidden" name="Charges[@i].VehicleRegistration" value="@Model.Charges[i].VehicleRegistration" />
-                        <input type="hidden" name="Charges[@i].OutstandingChargeKey" value="@Model.Charges[i].OutstandingChargeKey" />
-                        <input type="hidden" name="Charges[@i].AlreadyPaid" value="@Model.Charges[i].AlreadyPaid.ToString().ToLower()" />
-                    </div>
-                }
+                                       @(ch.Selected ? "checked" : "")
+                                       @(ch.AlreadyPaid ? "disabled" : "") />
+                            </td>
+                            <td>
+                                <strong>@ch.DisplayName</strong>
+                                @if (ch.AlreadyPaid) { <span class="badge bg-success ms-1">Paid</span> }
+                                @if (isUtility)
+                                {
+                                    <div class="small text-muted">Enter units — amount is calculated automatically</div>
+                                }
+                            </td>
+                            <td class="small">
+                                @if (!string.IsNullOrWhiteSpace(ch.VehicleRegistration))
+                                {
+                                    <span>@ch.VehicleRegistration</span>
+                                }
+                                else
+                                {
+                                    <span>@(ch.AccommodationLabel ?? Model.AccommodationDisplay ?? "—")</span>
+                                }
+                            </td>
+                            <td style="min-width:140px">
+                                @if (isUtility && !ch.AlreadyPaid)
+                                {
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control qty-input" min="0.01" step="0.01"
+                                               name="Charges[@i].Quantity"
+                                               value="@(ch.Quantity.HasValue && ch.Quantity > 0 ? ch.Quantity.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) : "")"
+                                               placeholder="0" />
+                                        <span class="input-group-text">@unit</span>
+                                    </div>
+                                    <input type="hidden" class="amount-input" name="Charges[@i].Amount" value="0" />
+                                }
+                                else if (!isUtility && !ch.AlreadyPaid)
+                                {
+                                    <span class="small text-muted">As applicable</span>
+                                    <input type="hidden" name="Charges[@i].Quantity" value="" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td class="small">
+                                @if (isUtility)
+                                {
+                                    <span>@((unitPrice ?? 0m).ToString("C")) / @unit</span>
+                                    <input type="hidden" name="Charges[@i].UnitPrice" value="@(unitPrice?.ToString(System.Globalization.CultureInfo.InvariantCulture))" />
+                                    <input type="hidden" name="Charges[@i].UnitOfMeasure" value="@unit" />
+                                }
+                                else if (!ch.AlreadyPaid)
+                                {
+                                    <div class="input-group input-group-sm" style="max-width:140px">
+                                        <span class="input-group-text">R</span>
+                                        <input type="number" class="form-control amount-input" min="0.01" step="0.01"
+                                               name="Charges[@i].Amount"
+                                               value="@(ch.Amount > 0 ? ch.Amount.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) : "")"
+                                               placeholder="0.00" />
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                            <td class="text-end fw-semibold line-total">R 0.00</td>
+                        </tr>
+                        <input type="hidden" name="Charges[@i].PaymentType" value="@ch.PaymentType" />
+                        <input type="hidden" name="Charges[@i].DisplayName" value="@ch.DisplayName" />
+                        <input type="hidden" name="Charges[@i].VehicleId" value="@ch.VehicleId" />
+                        <input type="hidden" name="Charges[@i].VehicleRegistration" value="@ch.VehicleRegistration" />
+                        <input type="hidden" name="Charges[@i].OutstandingChargeKey" value="@ch.OutstandingChargeKey" />
+                        <input type="hidden" name="Charges[@i].AlreadyPaid" value="@ch.AlreadyPaid.ToString().ToLower()" />
+                        <input type="hidden" name="Charges[@i].RequiresUnits" value="@isUtility.ToString().ToLower()" />
+                        <input type="hidden" name="Charges[@i].AccommodationId" value="@(ch.AccommodationId ?? Model.AccommodationId)" />
+                        <input type="hidden" name="Charges[@i].AccommodationLabel" value="@(ch.AccommodationLabel ?? Model.AccommodationDisplay)" />
+                    }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light">
+                            <td colspan="5" class="text-end fw-bold">Grand total</td>
+                            <td class="text-end fw-bold fs-5" id="lblTotal">R 0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
             </div>
 
-            <div class="fx-pay-summary p-3 mb-4 border rounded bg-light">
-                <div class="d-flex justify-content-between fw-bold fs-5">
-                    <span>Total</span><span id="lblTotal">R 0.00</span>
-                </div>
+            <div class="small text-muted mb-3">
+                Electricity tariff: <strong>@elecPrice.ToString("C")/kWh</strong>
+                · Water tariff: <strong>@waterPrice.ToString("C")/kL</strong>
+                (from server configuration — not hardcoded in the page).
             </div>
 
-            <button type="submit" class="btn btn-primary btn-lg" id="btnGo" disabled>Continue to Payment</button>
-            <a class="btn btn-outline-secondary btn-lg ms-1" asp-controller="Customer" asp-action="Index">Cancel</a>
+            <div class="mb-3">
+                <label class="form-label" asp-for="Notes">Notes (optional)</label>
+                <input class="form-control" asp-for="Notes" maxlength="500" />
+            </div>
+
+            <div class="btn-group-arnox">
+                <button type="submit" class="btn-arnox btn-arnox-primary btn-arnox-lg" id="btnGo" disabled>
+                    <i class="fa-solid fa-cart-shopping"></i> Continue to payment
+                </button>
+                <a class="btn-arnox btn-arnox-outline" asp-controller="Customer" asp-action="Index">Cancel</a>
+            </div>
         </form>
     </div>
 </div>
 @section Scripts {
 <script>
-(function(){
-  function recalc(){
-    let t = 0;
-    document.querySelectorAll('.list-group-item').forEach(row => {
+(function () {
+  function money(n) { return 'R ' + (isNaN(n) ? 0 : n).toFixed(2); }
+
+  function recalc() {
+    let grand = 0;
+    document.querySelectorAll('.charge-row').forEach(row => {
       const cb = row.querySelector('.charge-cb');
-      const amt = row.querySelector('.amount-input');
-      if (cb && !cb.disabled && cb.checked && amt) {
-        const v = parseFloat(amt.value);
-        if (!isNaN(v) && v > 0) t += v;
+      const lineEl = row.querySelector('.line-total');
+      if (!cb || cb.disabled || !cb.checked) {
+        if (lineEl) lineEl.textContent = money(0);
+        return;
       }
+      const requiresUnits = row.getAttribute('data-requires-units') === 'true';
+      let line = 0;
+      if (requiresUnits) {
+        const qtyInput = row.querySelector('.qty-input');
+        const unitPrice = parseFloat(row.getAttribute('data-unit-price') || '0');
+        const qty = qtyInput ? parseFloat(qtyInput.value) : 0;
+        if (!isNaN(qty) && qty > 0 && !isNaN(unitPrice)) {
+          line = qty * unitPrice;
+          const hiddenAmt = row.querySelector('.amount-input');
+          if (hiddenAmt) hiddenAmt.value = line.toFixed(2);
+        }
+      } else {
+        const amt = row.querySelector('.amount-input');
+        const v = amt ? parseFloat(amt.value) : 0;
+        if (!isNaN(v) && v > 0) line = v;
+      }
+      if (lineEl) lineEl.textContent = money(line);
+      grand += line;
     });
-    document.getElementById('lblTotal').textContent = 'R ' + t.toFixed(2);
-    document.getElementById('btnGo').disabled = t <= 0;
+    document.getElementById('lblTotal').textContent = money(grand);
+    document.getElementById('btnGo').disabled = grand <= 0;
   }
-  document.getElementById('btnAll').onclick = () => {
-    document.querySelectorAll('.charge-cb:not(:disabled)').forEach(c => c.checked = true);
-    recalc();
-  };
-  document.getElementById('btnNone').onclick = () => {
-    document.querySelectorAll('.charge-cb').forEach(c => c.checked = false);
-    recalc();
-  };
-  document.querySelectorAll('.charge-cb, .amount-input').forEach(el => {
+
+  document.querySelectorAll('.charge-cb, .qty-input, .amount-input').forEach(el => {
     el.addEventListener('change', recalc);
     el.addEventListener('input', recalc);
-  });
-  // Auto-check when user types an amount
-  document.querySelectorAll('.amount-input').forEach(inp => {
-    inp.addEventListener('input', function(){
-      const cb = this.closest('.list-group-item').querySelector('.charge-cb');
-      if (cb && !cb.disabled && parseFloat(this.value) > 0) cb.checked = true;
-      recalc();
-    });
   });
   recalc();
 })();

@@ -6,31 +6,55 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 namespace ArnoxPay.Controllers;
 
-public class PaymentController(AppDbContext context, UserManager<AppUser> userManager, INotificationService notifications, ITransactionService transactions, ICheckoutService checkout, ICampusAccountService campusAccounts) : Controller
+public class PaymentController(AppDbContext context, UserManager<AppUser> userManager, INotificationService notifications, ITransactionService transactions, ICheckoutService checkout, ICampusAccountService campusAccounts, IOptions<FeeSettings> feeOptions) : Controller
 {
 
     [Authorize(Roles = SystemRoles.FinancialOfficer + "," + SystemRoles.Administrator)]
     public async Task<IActionResult> Dashboard()
     {
         var user = await userManager.GetUserAsync(User);
+
+        var accepted = context.Payments.Where(x => x.Status == PaymentStatus.Accepted);
+        var pending = context.Payments.Where(x => x.Status == PaymentStatus.Pending || x.Status == PaymentStatus.AwaitingAuthentication || x.Status == PaymentStatus.Processing);
+        var rejected = context.Payments.Where(x => x.Status == PaymentStatus.Rejected || x.Status == PaymentStatus.Failed);
+
         var model = new DashboardViewModel
         {
             FullName = user is null ? "Financial Officer" : $"{user.FirstName} {user.LastName}",
             Role = SystemRoles.FinancialOfficer,
             ActiveCustomers = await context.Customers.CountAsync(x => x.AppUser!.IsActive),
-            PendingPayments = await context.Payments.CountAsync(x => x.Status == PaymentStatus.Pending || x.Status == PaymentStatus.AwaitingAuthentication || x.Status == PaymentStatus.Processing),
-            AcceptedPayments = await context.Payments.CountAsync(x => x.Status == PaymentStatus.Accepted),
-            AcceptedTotal = await context.Payments.Where(x => x.Status == PaymentStatus.Accepted).SumAsync(x => (decimal?)x.Amount) ?? 0,
+            PendingPayments = await pending.CountAsync(),
+            AcceptedPayments = await accepted.CountAsync(),
+            AcceptedTotal = await accepted.SumAsync(x => (decimal?)x.Amount) ?? 0,
             RecentPayments = await context.Payments
                 .Include(x => x.Customer!).ThenInclude(c => c.AppUser)
                 .Include(x => x.Items)
                 .OrderByDescending(x => x.SubmittedAtUtc)
-                .Take(8)
+                .Take(12)
                 .AsNoTracking()
                 .ToListAsync()
         };
+
+        ViewBag.PendingTotal = await pending.SumAsync(x => (decimal?)x.Amount) ?? 0;
+        ViewBag.RejectedCount = await rejected.CountAsync();
+        ViewBag.RejectedTotal = await rejected.SumAsync(x => (decimal?)x.Amount) ?? 0;
+
+        var acceptedItems = await context.PaymentItems
+            .Where(i => i.Payment!.Status == PaymentStatus.Accepted)
+            .GroupBy(i => i.PaymentType)
+            .Select(g => new { Type = g.Key, Total = g.Sum(x => x.Amount) })
+            .AsNoTracking()
+            .ToListAsync();
+
+        ViewBag.ElectricityRevenue = acceptedItems.FirstOrDefault(x => x.Type == PaymentType.Electricity)?.Total ?? 0m;
+        ViewBag.WaterRevenue = acceptedItems.FirstOrDefault(x => x.Type == PaymentType.Water)?.Total ?? 0m;
+        ViewBag.RentRevenue = acceptedItems.FirstOrDefault(x => x.Type == PaymentType.Rent)?.Total ?? 0m;
+        ViewBag.VehicleRevenue = acceptedItems.FirstOrDefault(x => x.Type == PaymentType.Parking)?.Total ?? 0m;
+        ViewBag.OtherRevenue = acceptedItems.Where(x => x.Type != PaymentType.Electricity && x.Type != PaymentType.Water && x.Type != PaymentType.Rent && x.Type != PaymentType.Parking).Sum(x => x.Total);
+
         return View(model);
     }
 
@@ -395,20 +419,78 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
     // ---- Multi-service / multi-vehicle checkout (additive) ----
 
     [Authorize(Roles = SystemRoles.Customer), HttpGet]
-    public async Task<IActionResult> SelectServices()
+    public IActionResult SelectServices()
+        => RedirectToAction("Hub", "ServicesHub");
+
+    // Legacy multi-table checkout retained but redirected; card-based hub is preferred.
+    [Authorize(Roles = SystemRoles.Customer), HttpGet]
+    public async Task<IActionResult> SelectServicesLegacy()
     {
         var c = await CurrentCustomer();
         if (c is null) return NotFound();
+        c = await context.Customers.Include(x => x.Accomodation).FirstAsync(x => x.Id == c.Id);
+
+        var fees = feeOptions.Value;
         var period = DateTime.UtcNow.ToString("yyyyMM");
         var vehicles = await context.Vehicles.Where(v => v.CustomerId == c.Id && v.IsActive).AsNoTracking().ToListAsync();
+        var accLabel = c.Accomodation is null
+            ? "No accommodation assigned"
+            : $"{c.Accomodation.Name}, Unit {c.Accomodation.UnitNumber}";
+
         var model = new MultiCheckoutViewModel
         {
+            AccommodationId = c.AccomodationId,
+            AccommodationDisplay = accLabel,
+            ElectricityPricePerKwh = fees.ElectricityPricePerKwh,
+            WaterPricePerKl = fees.WaterPricePerKl,
+            MaxElectricityUnits = fees.MaxElectricityUnits,
+            MaxWaterUnits = fees.MaxWaterUnits,
             Charges =
             [
-                new SelectableCharge { PaymentType = PaymentType.Rent, DisplayName = "Rent", Amount = 0m, OutstandingChargeKey = $"rent-{c.Id}-{period}" },
-                new SelectableCharge { PaymentType = PaymentType.Electricity, DisplayName = "Electricity", Amount = 0m, OutstandingChargeKey = $"elec-{c.Id}-{period}" },
-                new SelectableCharge { PaymentType = PaymentType.Water, DisplayName = "Water", Amount = 0m, OutstandingChargeKey = $"water-{c.Id}-{period}" },
-                new SelectableCharge { PaymentType = PaymentType.RefuseCollection, DisplayName = "Refuse", Amount = 0m, OutstandingChargeKey = $"refuse-{c.Id}-{period}" },
+                new SelectableCharge
+                {
+                    PaymentType = PaymentType.Rent,
+                    DisplayName = "Rent",
+                    Amount = 0m,
+                    OutstandingChargeKey = $"rent-{c.Id}-{period}",
+                    AccommodationLabel = accLabel,
+                    AccommodationId = c.AccomodationId
+                },
+                new SelectableCharge
+                {
+                    PaymentType = PaymentType.Electricity,
+                    DisplayName = "Electricity",
+                    Amount = 0m,
+                    OutstandingChargeKey = $"elec-{c.Id}-{period}",
+                    RequiresUnits = true,
+                    UnitOfMeasure = "kWh",
+                    UnitPrice = fees.ElectricityPricePerKwh,
+                    Quantity = null,
+                    AccommodationLabel = accLabel,
+                    AccommodationId = c.AccomodationId
+                },
+                new SelectableCharge
+                {
+                    PaymentType = PaymentType.Water,
+                    DisplayName = "Water",
+                    Amount = 0m,
+                    OutstandingChargeKey = $"water-{c.Id}-{period}",
+                    RequiresUnits = true,
+                    UnitOfMeasure = "kL",
+                    UnitPrice = fees.WaterPricePerKl,
+                    Quantity = null,
+                    AccommodationLabel = accLabel,
+                    AccommodationId = c.AccomodationId
+                },
+                new SelectableCharge
+                {
+                    PaymentType = PaymentType.RefuseCollection,
+                    DisplayName = "Refuse",
+                    Amount = 0m,
+                    OutstandingChargeKey = $"refuse-{c.Id}-{period}",
+                    AccommodationLabel = accLabel,
+                    AccommodationId = c.AccomodationId
+                },
             ]
         };
         foreach (var v in vehicles)
@@ -416,7 +498,7 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
             model.Charges.Add(new SelectableCharge
             {
                 PaymentType = PaymentType.Parking,
-                DisplayName = $"Parking - {v.RegistrationNumber}",
+                DisplayName = $"Parking / vehicle fee — {v.RegistrationNumber}",
                 Amount = 0m,
                 VehicleId = v.Id,
                 VehicleRegistration = v.RegistrationNumber,
@@ -436,11 +518,68 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
     {
         var c = await CurrentCustomer();
         if (c is null) return NotFound();
+        c = await context.Customers.Include(x => x.Accomodation).FirstAsync(x => x.Id == c.Id);
+
+        var fees = feeOptions.Value;
+        model.ElectricityPricePerKwh = fees.ElectricityPricePerKwh;
+        model.WaterPricePerKl = fees.WaterPricePerKl;
+        model.MaxElectricityUnits = fees.MaxElectricityUnits;
+        model.MaxWaterUnits = fees.MaxWaterUnits;
+        model.AccommodationId = c.AccomodationId;
+        model.AccommodationDisplay = c.Accomodation is null
+            ? "No accommodation assigned"
+            : $"{c.Accomodation.Name}, Unit {c.Accomodation.UnitNumber}";
+
         var items = new List<CheckoutLineItem>();
         if (model.Charges != null)
         {
-            foreach (var ch in model.Charges.Where(x => x.Selected && !x.AlreadyPaid && x.Amount > 0))
+            foreach (var ch in model.Charges.Where(x => x.Selected && !x.AlreadyPaid))
             {
+                // Unit-based utilities: amount = quantity × unit price
+                if (ch.PaymentType is PaymentType.Electricity or PaymentType.Water)
+                {
+                    var unitPrice = ch.PaymentType == PaymentType.Electricity
+                        ? fees.ElectricityPricePerKwh
+                        : fees.WaterPricePerKl;
+                    var maxUnits = ch.PaymentType == PaymentType.Electricity
+                        ? fees.MaxElectricityUnits
+                        : fees.MaxWaterUnits;
+                    var unit = ch.PaymentType == PaymentType.Electricity ? "kWh" : "kL";
+
+                    if (unitPrice is null)
+                    {
+                        ModelState.AddModelError(string.Empty, $"{ch.PaymentType} tariff is not configured. Contact administration.");
+                        return View(model);
+                    }
+                    if (ch.Quantity is null or <= 0)
+                    {
+                        ModelState.AddModelError(string.Empty, $"Enter the number of {unit} for {ch.PaymentType}.");
+                        return View(model);
+                    }
+                    if (ch.Quantity > maxUnits)
+                    {
+                        ModelState.AddModelError(string.Empty, $"{ch.PaymentType} quantity cannot exceed {maxUnits} {unit}.");
+                        return View(model);
+                    }
+
+                    var qty = ch.Quantity.Value;
+                    var lineTotal = Math.Round(qty * unitPrice.Value, 2, MidpointRounding.AwayFromZero);
+                    var accLabel = model.AccommodationDisplay ?? "";
+                    items.Add(new CheckoutLineItem
+                    {
+                        PaymentType = ch.PaymentType,
+                        Amount = lineTotal,
+                        Description = $"{ch.PaymentType}: {qty:0.####} {unit} @ {unitPrice.Value:C}/{unit} — {accLabel}",
+                        OutstandingChargeKey = ch.OutstandingChargeKey,
+                        Quantity = qty,
+                        UnitPrice = unitPrice,
+                        UnitOfMeasure = unit,
+                        AccommodationId = c.AccomodationId
+                    });
+                    continue;
+                }
+
+                if (ch.Amount <= 0) continue;
                 items.Add(new CheckoutLineItem
                 {
                     PaymentType = ch.PaymentType,
@@ -448,17 +587,15 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
                     Description = ch.DisplayName,
                     VehicleId = ch.VehicleId,
                     VehicleRegistration = ch.VehicleRegistration,
-                    OutstandingChargeKey = ch.OutstandingChargeKey
+                    OutstandingChargeKey = ch.OutstandingChargeKey,
+                    AccommodationId = c.AccomodationId
                 });
             }
         }
         if (items.Count == 0)
         {
-            var selectedNoAmount = model.Charges != null && model.Charges.Any(x => x.Selected && !x.AlreadyPaid && x.Amount <= 0);
             ModelState.AddModelError(string.Empty,
-                selectedNoAmount
-                    ? "Enter an amount greater than R0 for each selected payment."
-                    : "Select at least one payment and enter the amount.");
+                "Select at least one item. For electricity/water enter units; for other services enter an amount greater than R0.");
             return View(model);
         }
         try
