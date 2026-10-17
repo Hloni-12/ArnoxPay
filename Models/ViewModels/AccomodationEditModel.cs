@@ -19,6 +19,8 @@ public class AccomodationEditModel
     = 1;
     [StringLength(1000)]
     public string? Description { get; set; }
+    [Required] public AccommodationRoomType? RoomType { get; set; }
+    [Range(0, 1000000)] public decimal? MonthlyRent { get; set; }
     public bool IsActive { get; set; }
     = true;
 }

@@ -1,10 +1,17 @@
 using ArnoxPay.Data;
 using ArnoxPay.Infrastructure;
 using ArnoxPay.Models;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var zaCulture = new CultureInfo("en-ZA");
+CultureInfo.DefaultThreadCurrentCulture = zaCulture;
+CultureInfo.DefaultThreadCurrentUICulture = zaCulture;
 
 // MVC
 builder.Services.AddControllersWithViews();
@@ -74,6 +81,10 @@ builder.Services
     .AddDefaultTokenProviders()
     .AddUserValidator<StaffEmailDomainValidator>();
 
+// Required by the mobile bearer-token issuer and validator.
+builder.Services.AddDataProtection();
+builder.Services.AddSingleton<MobileTokenService>();
+
 // Cookie paths must match lowercase + trailing-slash routing
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -87,6 +98,14 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
+var localization = new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture(zaCulture),
+    SupportedCultures = [zaCulture],
+    SupportedUICultures = [zaCulture]
+};
+app.UseRequestLocalization(localization);
+
 // Apply migrations + seed roles/admin (safe if DB is not ready yet)
 using (var scope = app.Services.CreateScope())
 {
@@ -97,6 +116,18 @@ using (var scope = app.Services.CreateScope())
     {
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
+        // Smallest additive schema change for Property → Unit → Corridor → Room.
+        // Existing rows are preserved; new columns are nullable.
+        await db.Database.ExecuteSqlRawAsync("""
+            IF COL_LENGTH('Accomodations', 'Corridor') IS NULL
+                ALTER TABLE Accomodations ADD Corridor nvarchar(80) NULL;
+            IF COL_LENGTH('Accomodations', 'RoomNumber') IS NULL
+                ALTER TABLE Accomodations ADD RoomNumber nvarchar(40) NULL;
+            IF COL_LENGTH('dbo.Accomodations', 'MonthlyRent') IS NULL
+                ALTER TABLE dbo.Accomodations ADD MonthlyRent decimal(18,2) NULL;
+            IF COL_LENGTH('dbo.Accomodations', 'RoomType') IS NULL
+                ALTER TABLE dbo.Accomodations ADD RoomType int NULL;
+            """);
     }
     catch (Exception ex)
     {

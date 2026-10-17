@@ -12,30 +12,31 @@ public class NotificationController(AppDbContext context, UserManager<AppUser> u
 {
     public async Task<IActionResult> Index()
     {
-        var c = await CurrentCustomer();
-        if (c is null) return NotFound();
+        var customer = await CurrentCustomer();
+        if (customer is null) return NotFound();
 
-        var list = await context.Notifications
-            .Where(x => x.CustomerId == c.Id)
+        var notifications = await context.Notifications
+            .Where(x => x.CustomerId == customer.Id)
             .OrderByDescending(x => x.CreatedAtUtc)
             .ToListAsync();
 
-        return View(list);
+        return View(notifications);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkRead(int id)
     {
-        var c = await CurrentCustomer();
-        if (c is null) return NotFound();
+        var customer = await CurrentCustomer();
+        if (customer is null) return NotFound();
 
-        var n = await context.Notifications.FirstOrDefaultAsync(x => x.Id == id && x.CustomerId == c.Id);
-        if (n is null) return NotFound();
+        var notification = await context.Notifications
+            .FirstOrDefaultAsync(x => x.Id == id && x.CustomerId == customer.Id);
+        if (notification is null) return NotFound();
 
-        if (!n.IsRead)
+        if (!notification.IsRead)
         {
-            n.IsRead = true;
-            n.ReadAt = DateTime.UtcNow;
+            notification.IsRead = true;
+            notification.ReadAt = DateTime.UtcNow;
             await context.SaveChangesAsync();
         }
 
@@ -45,37 +46,55 @@ public class NotificationController(AppDbContext context, UserManager<AppUser> u
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkAllRead()
     {
-        var c = await CurrentCustomer();
-        if (c is null) return NotFound();
+        var customer = await CurrentCustomer();
+        if (customer is null) return NotFound();
 
         var unread = await context.Notifications
-            .Where(x => x.CustomerId == c.Id && !x.IsRead)
+            .Where(x => x.CustomerId == customer.Id && !x.IsRead)
             .ToListAsync();
 
         var now = DateTime.UtcNow;
-        foreach (var n in unread)
+        foreach (var notification in unread)
         {
-            n.IsRead = true;
-            n.ReadAt = now;
+            notification.IsRead = true;
+            notification.ReadAt = now;
         }
 
-        if (unread.Count > 0)
-            await context.SaveChangesAsync();
+        if (unread.Count > 0) await context.SaveChangesAsync();
 
         TempData["Success"] = "All notifications marked as read.";
         return RedirectToAction(nameof(Index));
     }
 
-    /// <summary>Marks a notification read when opened (e.g. from a deep link).</summary>
+    /// <summary>Marks this customer's notification as read and opens its local target, if present.</summary>
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Open(int id)
     {
-        return await MarkRead(id);
+        var customer = await CurrentCustomer();
+        if (customer is null) return NotFound();
+
+        var notification = await context.Notifications
+            .FirstOrDefaultAsync(x => x.Id == id && x.CustomerId == customer.Id);
+        if (notification is null) return NotFound();
+
+        if (!notification.IsRead)
+        {
+            notification.IsRead = true;
+            notification.ReadAt = DateTime.UtcNow;
+            await context.SaveChangesAsync();
+        }
+
+        if (!string.IsNullOrWhiteSpace(notification.LinkUrl) && Url.IsLocalUrl(notification.LinkUrl))
+            return Redirect(notification.LinkUrl);
+
+        return RedirectToAction(nameof(Index));
     }
 
     private async Task<Customer?> CurrentCustomer()
     {
-        var u = await userManager.GetUserAsync(User);
-        return u is null ? null : await context.Customers.FirstOrDefaultAsync(x => x.AppUserId == u.Id);
+        var user = await userManager.GetUserAsync(User);
+        return user is null
+            ? null
+            : await context.Customers.FirstOrDefaultAsync(x => x.AppUserId == user.Id);
     }
 }

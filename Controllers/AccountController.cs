@@ -14,7 +14,8 @@ public class AccountController(
     UserManager<AppUser> userManager,
     RoleManager<IdentityRole> roleManager,
     SignInManager<AppUser> signInManager,
-    INotificationService notifications) : Controller
+    INotificationService notifications,
+    MobileTokenService mobileTokens) : Controller
 {
     // =====================================================================
     //  SHARED LOGIN LOGIC (used by both website and Android API)
@@ -312,11 +313,15 @@ public class AccountController(
                  : roles.Contains(SystemRoles.FinancialOfficer) ? SystemRoles.FinancialOfficer
                  : SystemRoles.Customer;
 
+        var token = mobileTokens.Issue(user.Id, await userManager.GetSecurityStampAsync(user));
+
         return Ok(new
         {
             success = true,
             role,
-            userId = user.Id,
+            accessToken = token.AccessToken,
+            tokenType = "Bearer",
+            expiresAtUtc = token.ExpiresAtUtc,
             name = user.FirstName,
             surname = user.LastName
         });

@@ -7,7 +7,7 @@
 <div class="mb-4">
 	<a class="small text-decoration-none" asp-action="List">← All accomodations</a>
 	<h1 class="page-title h2 mt-2 mb-1">@Model.Accomodation.Name</h1>
-	<p class="text-muted mb-0">Unit @Model.Accomodation.UnitNumber · @Model.Accomodation.Address · @Model.Accomodation.AccommodationType</p>
+	<p class="text-muted mb-0">Unit @Model.Accomodation.UnitNumber · @Model.Accomodation.Address · @Model.Accomodation.AccommodationType · @(Model.Accomodation.RoomType?.ToString() ?? "Room type not confirmed") room</p>
 </div>
 <div class="row g-4">
 	<div class="col-lg-7">@if(images.Any()){
@@ -34,6 +34,9 @@
 		<h2 class="h5">Residence information</h2>
 		<p class="text-muted">@(string.IsNullOrWhiteSpace(Model.Accomodation.Description) ? "No additional description has been supplied." : Model.Accomodation.Description)</p>
 			<dl class="row small mb-4">
+				<dt class="col-5">Monthly rent</dt>
+				<dd class="col-7">@(Model.Accomodation.MonthlyRent.HasValue ? Model.Accomodation.MonthlyRent.Value.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-ZA")) : "Not published")</dd>
+				<dt class="col-5">Room type</dt><dd class="col-7">@(Model.Accomodation.RoomType?.ToString() ?? "Not confirmed")</dd>
 				<dt class="col-5">Capacity</dt>
 				<dd class="col-7">@Model.Accomodation.Capacity residents</dd>
 				<dt class="col-5">Occupied</dt>
@@ -48,7 +51,7 @@
 					{
 						<div class="alert alert-warning">Your residence request is awaiting administrator review.</div>
 					}
-					else if(!full)
+					else if(!full && User.IsInRole(SystemRoles.Customer))
 					{
 						<form asp-action="RequestAssignment" method="post"><input name="AccomodationId" value="@Model.Accomodation.Id" type="hidden"/>
 						<label class="form-label" for="CustomerNote">Optional note to administrator</label>
@@ -58,9 +61,11 @@
 							<button class="btn btn-primary">Request this accomodation</button>
 						</form>
 					}
-					else
+					else if (User.Identity?.IsAuthenticated != true)
+                    { <div class="alert alert-info">Please <a asp-controller="Account" asp-action="Login" asp-route-returnUrl="@Url.Action("Details", "Accomodation", new { id = Model.Accomodation.Id })">sign in</a> as a customer to submit a residence request.</div> }
+					else if(full)
 					{
-						<div class="alert alert-secondary mb-0">This accomodation is currently at capacity.</div>
+						<div class="alert alert-secondary mb-0">This accommodation is currently fully occupied.</div>
 					}
 	</section>
 </div>

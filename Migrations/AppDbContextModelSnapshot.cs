@@ -135,6 +135,10 @@ namespace ArnoxPay.Migrations
                     b.Property<int>("Capacity")
                         .HasColumnType("int");
 
+                    b.Property<string>("Corridor")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
                     b.Property<string>("Description")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -142,10 +146,20 @@ namespace ArnoxPay.Migrations
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
+                    b.Property<decimal?>("MonthlyRent")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(120)
                         .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("RoomNumber")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int?>("RoomType")
+                        .HasColumnType("int");
 
                     b.Property<string>("UnitNumber")
                         .IsRequired()
@@ -191,6 +205,58 @@ namespace ArnoxPay.Migrations
                     b.HasIndex("AccomodationId");
 
                     b.ToTable("AccomodationImages");
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.Announcement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<DateTime?>("DeadlineUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsPublished")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("PublishedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("PublishedByUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("ReminderAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsPublished", "PublishedAtUtc");
+
+                    b.ToTable("Announcements");
                 });
 
             modelBuilder.Entity("ArnoxPay.Models.AppUser", b =>
@@ -446,6 +512,10 @@ namespace ArnoxPay.Migrations
 
                     b.Property<bool>("IsRead")
                         .HasColumnType("bit");
+
+                    b.Property<string>("LinkUrl")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
 
                     b.Property<string>("Message")
                         .IsRequired()
@@ -798,6 +868,85 @@ namespace ArnoxPay.Migrations
                     b.HasIndex("CustomerId");
 
                     b.ToTable("ServiceReviews");
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.StaffMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("nvarchar(2000)");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("RecipientUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SenderUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("SentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderUserId", "RecipientUserId", "SentAtUtc");
+
+                    b.ToTable("StaffMessages");
+                });
+
+            modelBuilder.Entity("ArnoxPay.Models.StaffNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<DateTime?>("ReadAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<string>("Url")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "IsRead", "CreatedAtUtc");
+
+                    b.ToTable("StaffNotifications");
                 });
 
             modelBuilder.Entity("ArnoxPay.Models.Transaction", b =>

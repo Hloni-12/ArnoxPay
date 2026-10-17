@@ -23,7 +23,9 @@
 					<label asp-for="Capacity" class="form-label"></label>
 					<input asp-for="Capacity" class="form-control" min="1" max="20"/>
 				</div>
-				<div class="col-12">
+				<div class="col-md-6"><label asp-for="RoomType" class="form-label"></label><select asp-for="RoomType" asp-items="Html.GetEnumSelectList<AccommodationRoomType>()" class="form-select"><option value="">Select a verified room type</option></select><span asp-validation-for="RoomType" class="text-danger"></span></div>
+					<div class="col-md-6"><label asp-for="MonthlyRent" class="form-label">Monthly rent (ZAR)</label><input asp-for="MonthlyRent" class="form-control" type="number" min="0" step="0.01" placeholder="Leave blank until confirmed"/><span asp-validation-for="MonthlyRent" class="text-danger"></span></div>
+					<div class="col-12">
 					<label asp-for="Address" class="form-label"></label>
 					<input asp-for="Address" class="form-control"/>
 				</div>

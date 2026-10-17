@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ArnoxPay.Migrations
 {
     /// <inheritdoc />
-    public partial class initial : Migration
+    public partial class INITIAL : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -19,15 +19,40 @@ namespace ArnoxPay.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
                     UnitNumber = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    Corridor = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
+                    RoomNumber = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
                     Address = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     AccommodationType = table.Column<int>(type: "int", nullable: false),
                     Capacity = table.Column<int>(type: "int", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    MonthlyRent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
+                    RoomType = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Accomodations", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Announcements",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Body = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
+                    Audience = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
+                    DeadlineUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReminderAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    Priority = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    PublishedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    PublishedByUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    IsPublished = table.Column<bool>(type: "bit", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Announcements", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -87,6 +112,42 @@ namespace ArnoxPay.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ParkingAreas", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StaffMessages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    SenderUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    RecipientUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    Body = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
+                    SentAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReadAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StaffMessages", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StaffNotifications",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
+                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    Url = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
+                    IsRead = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    ReadAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StaffNotifications", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -392,6 +453,7 @@ namespace ArnoxPay.Migrations
                     CustomerId = table.Column<int>(type: "int", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
                     Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    LinkUrl = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
                     IsRead = table.Column<bool>(type: "bit", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
                     ReadAt = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -712,6 +774,11 @@ namespace ArnoxPay.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Announcements_IsPublished_PublishedAtUtc",
+                table: "Announcements",
+                columns: new[] { "IsPublished", "PublishedAtUtc" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
                 table: "AspNetRoleClaims",
                 column: "RoleId");
@@ -881,6 +948,16 @@ namespace ArnoxPay.Migrations
                 column: "CustomerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_StaffMessages_SenderUserId_RecipientUserId_SentAtUtc",
+                table: "StaffMessages",
+                columns: new[] { "SenderUserId", "RecipientUserId", "SentAtUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StaffNotifications_UserId_IsRead_CreatedAtUtc",
+                table: "StaffNotifications",
+                columns: new[] { "UserId", "IsRead", "CreatedAtUtc" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Transactions_CustomerId",
                 table: "Transactions",
                 column: "CustomerId");
@@ -926,6 +1003,9 @@ namespace ArnoxPay.Migrations
                 name: "AccomodationImages");
 
             migrationBuilder.DropTable(
+                name: "Announcements");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
             migrationBuilder.DropTable(
@@ -957,6 +1037,12 @@ namespace ArnoxPay.Migrations
 
             migrationBuilder.DropTable(
                 name: "ServiceReviews");
+
+            migrationBuilder.DropTable(
+                name: "StaffMessages");
+
+            migrationBuilder.DropTable(
+                name: "StaffNotifications");
 
             migrationBuilder.DropTable(
                 name: "Transactions");

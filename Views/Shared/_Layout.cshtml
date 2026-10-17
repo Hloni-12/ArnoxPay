@@ -54,6 +54,7 @@
                             }
                             else if (User.IsInRole(SystemRoles.FinancialOfficer))
                             {
+                                <li class="nav-item"><a class="nav-icon-btn position-relative" asp-controller="StaffNotification" asp-action="Index" title="Notifications"><i class="fa-regular fa-bell"></i>@if(ViewBag.StaffUnreadCount is int uc && uc>0){<span class="notif-badge">@(uc>99?"99+":uc.ToString())</span>}</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Dashboard">Dashboard</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Customers">Customers</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-controller="Payment" asp-action="Index">Payments</a></li>
@@ -77,6 +78,8 @@
                         else
                         {
                             <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Accomodation" asp-action="List">Accommodation</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-controller="Contact" asp-action="Index">Contact</a></li>
                             <li class="nav-item"><a class="nav-link" href="#solutions">Services</a></li>
                             <li class="nav-item"><a class="nav-link" href="#how-it-works">How it works</a></li>
                         }
@@ -84,10 +87,27 @@
                     <ul class="navbar-nav align-items-lg-center gap-lg-2">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
+                            @if (User.IsInRole(SystemRoles.Administrator) || User.IsInRole(SystemRoles.FinancialOfficer))
+                            {
+                                <li class="nav-item">@await Component.InvokeAsync("UnreadNotifications")</li>
+                                <li class="nav-item"><a class="nav-link" asp-controller="StaffCommunication" asp-action="Index">Staff messages</a></li>
+                                <li class="nav-item">
+                                    <a class="nav-icon-btn" asp-controller="Announcement" asp-action="@(User.IsInRole(SystemRoles.Administrator) ? "Index" : "Inbox")" title="Announcements" aria-label="Announcements">
+                                        <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Announcements</span>
+                                    </a>
+                                </li>
+                            }
                             @if (User.IsInRole(SystemRoles.Customer))
                             {
                                 <li class="nav-item">
                                     @await Component.InvokeAsync("UnreadNotifications")
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-icon-btn" asp-controller="Announcement" asp-action="Inbox" title="Announcements" aria-label="Announcements">
+                                        <i class="fa-solid fa-bullhorn" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Announcements</span>
+                                    </a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-icon-btn" asp-controller="Profile" asp-action="Index" title="Profile">
@@ -225,6 +245,8 @@
                             }
                             else
                             {
+                                <li><a asp-controller="Accomodation" asp-action="List">Accommodation</a></li>
+                                <li><a asp-controller="Contact" asp-action="Index">Contact staff</a></li>
                                 <li><a asp-controller="Account" asp-action="Login">Log In</a></li>
                                 <li><a asp-controller="Account" asp-action="Register">Register</a></li>
                             }

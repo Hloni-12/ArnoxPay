@@ -49,11 +49,8 @@
                 <div class="align-self-center">
                     @if (!n.IsRead)
                     {
-                        <form asp-action="MarkRead" method="post">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="id" value="@n.Id" />
-                            <button type="submit" class="btn btn-sm btn-outline-secondary">Mark as read</button>
-                        </form>
+                        @if (!string.IsNullOrWhiteSpace(n.LinkUrl)) { <form asp-action="Open" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@n.Id"/><button type="submit" class="btn btn-sm btn-outline-primary">Open</button></form> }
+                        else { <form asp-action="MarkRead" method="post">@Html.AntiForgeryToken()<input type="hidden" name="id" value="@n.Id"/><button type="submit" class="btn btn-sm btn-outline-secondary">Mark as read</button></form> }
                     }
                     else
                     {

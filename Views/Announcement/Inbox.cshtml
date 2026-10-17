@@ -1,0 +1,3 @@
+@model List<ArnoxPay.Models.Announcement>
+@{ViewData["Title"]="Announcements";}
+<div class="content-card"><h1 class="h2">Announcements</h1>@if(!Model.Any()){<p class="text-muted">No announcements for your role.</p>}@foreach(var a in Model){<article class="border-bottom py-3"><h2 class="h5"><a asp-action="Read" asp-route-id="@a.Id">@a.Title</a> <span class="badge text-bg-@(a.Priority=="Urgent"?"danger":a.Priority=="High"?"warning":"secondary")">@a.Priority</span></h2><p>@a.Body</p><small>Published @a.PublishedAtUtc.ToLocalTime().ToString("g") @if(a.DeadlineUtc.HasValue){<span>· Deadline @a.DeadlineUtc.Value.ToLocalTime().ToString("g")</span>} @if(a.ReminderAtUtc.HasValue){<span>· Reminder @a.ReminderAtUtc.Value.ToLocalTime().ToString("g")</span>}</small></article>}</div>

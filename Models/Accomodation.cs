@@ -19,6 +19,14 @@ public class Accomodation
     [Required, StringLength(40)]
     public string UnitNumber { get; set; } = string.Empty;
 
+    /// <summary>Corridor within the unit (Property → Unit → Corridor → Room).</summary>
+    [StringLength(80)]
+    public string? Corridor { get; set; }
+
+    /// <summary>Room identifier within the corridor. Null when a room has not been allocated.</summary>
+    [StringLength(40)]
+    public string? RoomNumber { get; set; }
+
     [Required, StringLength(200)]
     public string Address { get; set; } = string.Empty;
 
@@ -31,6 +39,13 @@ public class Accomodation
     public string? Description { get; set; }
 
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Monthly rent in South African rand; null means the administrator has not entered a verified price.</summary>
+    [Column(TypeName = "decimal(18,2)")]
+    [Range(0, 1000000)]
+    public decimal? MonthlyRent { get; set; }
+
+    public AccommodationRoomType? RoomType { get; set; }
 
     public ICollection<Customer> Residents { get; set; }
         = new List<Customer>();

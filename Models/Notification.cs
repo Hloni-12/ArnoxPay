@@ -15,6 +15,9 @@ public class Notification
     [Required, StringLength(500)]
     public string Message { get; set; } = string.Empty;
 
+    [StringLength(300)]
+    public string? LinkUrl { get; set; }
+
     public bool IsRead { get; set; }
 
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;

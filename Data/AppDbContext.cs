@@ -15,6 +15,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<StaffNotification> StaffNotifications => Set<StaffNotification>();
+    public DbSet<Announcement> Announcements => Set<Announcement>();
+    public DbSet<StaffMessage> StaffMessages => Set<StaffMessage>();
     public DbSet<ServiceReview> ServiceReviews => Set<ServiceReview>();
     public DbSet<Vehicle> Vehicles => Set<Vehicle>();
     public DbSet<ParkingArea> ParkingAreas => Set<ParkingArea>();
@@ -109,6 +112,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbCo
             e.HasOne(x => x.Customer).WithMany(x => x.Notifications).HasForeignKey(x => x.CustomerId).OnDelete(DeleteBehavior.Cascade);
         }
         );
+
+        builder.Entity<StaffNotification>(e => { e.HasIndex(x => new { x.UserId, x.IsRead, x.CreatedAtUtc }); });
+        builder.Entity<Announcement>(e => { e.HasIndex(x => new { x.IsPublished, x.PublishedAtUtc }); });
+        builder.Entity<StaffMessage>(e => { e.HasIndex(x => new { x.SenderUserId, x.RecipientUserId, x.SentAtUtc }); });
 
         builder.Entity<ServiceReview>(e =>
         {

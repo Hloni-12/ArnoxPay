@@ -2,53 +2,156 @@
 @{
 	ViewData["Title"] = "Residence requests";
 }
-<div class="mb-4"><h1 class="page-title h2 mb-1">Residence requests</h1>
-	<p class="text-muted mb-0">Approve or reject student and staff requests to reside in a specific accomodation.</p>
-	</div>
-	<section class="content-card p-0 overflow-hidden">
-		@if(Model.Any())
-		{
-			<div class="table-responsive">
-				<table class="table table-hover mb-0">
-					<thead>
-						<tr>
-							<th>Customer</th>
-							<th>Accomodation</th>
-							<th>Requested</th>
-							<th>Customer note</th>
-							<th>Status</th>
-							<th class="text-end">Review</th>
-						</tr>
-					</thead>
-					<tbody>@foreach(var request in Model)
+<div class="mb-4">
+	<h1 class="page-title h2 mb-1">Residence requests</h1>
+	<p class="text-muted mb-0">Approve or reject student and staff requests to reside in a specific accommodation.</p>
+</div>
+
+@if (TempData["Success"] is string success)
+{
+	<div class="alert alert-success">@success</div>
+}
+@if (TempData["Error"] is string error)
+{
+	<div class="alert alert-danger">@error</div>
+}
+
+<section class="content-card p-0 overflow-hidden">
+	@if (Model.Any())
+	{
+		<div class="table-responsive">
+			<table class="table table-hover mb-0">
+				<thead>
+					<tr>
+						<th>Customer</th>
+						<th>Accommodation</th>
+						<th>Requested</th>
+						<th>Customer note</th>
+						<th>Status</th>
+						<th class="text-end">Review</th>
+					</tr>
+				</thead>
+				<tbody>
+				@foreach (var request in Model)
+				{
+					<tr>
+						<td>
+							@request.Customer?.AppUser?.FirstName @request.Customer?.AppUser?.LastName
+							<br /><small>@(request.Customer?.UserNumber ?? request.Customer?.UniversityNumber)</small>
+						</td>
+						<td>
+							@request.Accomodation?.Name
+							<br /><small>Unit @request.Accomodation?.UnitNumber</small>
+						</td>
+						<td>@request.RequestedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+						<td>@(string.IsNullOrWhiteSpace(request.CustomerNote) ? "—" : request.CustomerNote)</td>
+						<td><partial name="_StatusBadge" model="@request.Status.ToString()" /></td>
+						<td class="text-end">
+						@if (request.Status == AccommodationAssignmentStatus.Pending)
 						{
-							<tr>
-								<td>@request.Customer?.AppUser?.FirstName @request.Customer?.AppUser?.LastName<br/><small>@request.Customer?.UniversityNumber</small></td>
-								<td>@request.Accomodation?.Name<br/><small>Unit @request.Accomodation?.UnitNumber</small></td>
-								<td>@request.RequestedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
-								<td>@request.CustomerNote</td>
-								<td><partial name="_StatusBadge" model="@request.Status.ToString()"/></td>
-								<td class="text-end">@if(request.Status==AccommodationAssignmentStatus.Pending)
-									{
-										<form asp-action="ReviewAssignment" method="post" class="d-inline">
-											<input name="Id" value="@request.Id" type="hidden"/>
-											<input name="AdministratorNote" class="form-control form-control-sm d-inline-block mb-1" style="width:150px" placeholder="Administrator note"/>
-											<button name="Status" value="@AccommodationAssignmentStatus.Approved" class="btn btn-sm btn-success">Approve</button>
-											<button name="Status" value="@AccommodationAssignmentStatus.Rejected" class="btn btn-sm btn-outline-danger">Reject</button>
-										</form>}
-										else
-										{
-											<small>@request.AdministratorNote</small>
-										}
-								</td>
-							</tr>
+							<form asp-action="ReviewAssignment" method="post" class="d-inline-flex flex-wrap gap-1 justify-content-end align-items-center">
+								@Html.AntiForgeryToken()
+								<input type="hidden" name="Id" value="@request.Id" />
+								<button type="submit" name="Status" value="@AccommodationAssignmentStatus.Approved"
+										class="btn btn-sm btn-success"
+										onclick="return confirm('Approve this residence application? The customer will be notified automatically.');">
+									Approve
+								</button>
+								<button type="button" class="btn btn-sm btn-outline-danger"
+										data-bs-toggle="modal"
+										data-bs-target="#rejectModal"
+										data-request-id="@request.Id"
+										data-customer="@request.Customer?.AppUser?.FirstName @request.Customer?.AppUser?.LastName"
+										data-unit="@request.Accomodation?.Name (Unit @request.Accomodation?.UnitNumber)">
+									Reject
+								</button>
+							</form>
 						}
-					</tbody>
-				</table>
-			</div>
+						else
+						{
+							<small class="text-muted d-block text-start" style="max-width:220px; margin-left:auto;">
+								@if (request.Status == AccommodationAssignmentStatus.Approved)
+								{
+									<span>@request.AdministratorNote</span>
+								}
+								else
+								{
+									<strong>Reason:</strong> @request.AdministratorNote
+								}
+							</small>
+						}
+						</td>
+					</tr>
+				}
+				</tbody>
+			</table>
+		</div>
+	}
+	else
+	{
+		<div class="empty-state">No residence requests have been submitted.</div>
+	}
+</section>
+
+<!-- Reject / Cancel modal: reason mandatory -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<form asp-action="ReviewAssignment" method="post" id="rejectForm">
+				@Html.AntiForgeryToken()
+				<input type="hidden" name="Id" id="rejectRequestId" value="" />
+				<input type="hidden" name="Status" value="@AccommodationAssignmentStatus.Rejected" />
+				<div class="modal-header">
+					<h5 class="modal-title" id="rejectModalLabel">Reject Residence Application</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<p class="text-muted mb-2" id="rejectContext"></p>
+					<p class="mb-2">Please provide a reason for rejecting this application. The customer will see this message.</p>
+					<label class="form-label" for="rejectReason">Rejection reason <span class="text-danger">*</span></label>
+					<textarea name="AdministratorNote" id="rejectReason" class="form-control" rows="4"
+							  required maxlength="1000"
+							  placeholder="Explain why the application is being rejected…"></textarea>
+					<div class="invalid-feedback" id="rejectReasonError">A rejection reason is required.</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+					<button type="submit" class="btn btn-danger" id="confirmRejectBtn">Confirm Rejection</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+	var modal = document.getElementById('rejectModal');
+	if (!modal) return;
+	modal.addEventListener('show.bs.modal', function (event) {
+		var btn = event.relatedTarget;
+		if (!btn) return;
+		document.getElementById('rejectRequestId').value = btn.getAttribute('data-request-id') || '';
+		var customer = btn.getAttribute('data-customer') || '';
+		var unit = btn.getAttribute('data-unit') || '';
+		document.getElementById('rejectContext').textContent =
+			(customer ? ('Customer: ' + customer + '. ') : '') + (unit ? ('Unit: ' + unit) : '');
+		var reason = document.getElementById('rejectReason');
+		reason.value = '';
+		reason.classList.remove('is-invalid');
+	});
+	document.getElementById('rejectForm').addEventListener('submit', function (e) {
+		var reason = document.getElementById('rejectReason');
+		if (!reason.value || !reason.value.trim()) {
+			e.preventDefault();
+			reason.classList.add('is-invalid');
+			return false;
 		}
-		else
-		{
-			<div class="empty-state">No residence requests have been submitted.</div>
-		}
-	</section>
+		reason.classList.remove('is-invalid');
+		var btn = document.getElementById('confirmRejectBtn');
+		btn.disabled = true;
+		btn.textContent = 'Submitting…';
+	});
+})();
+</script>
+}

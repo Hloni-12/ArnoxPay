@@ -1,0 +1,3 @@
+using System.ComponentModel.DataAnnotations;
+namespace ArnoxPay.Models;
+public class Announcement { public int Id {get;set;} [Required,StringLength(150)] public string Title {get;set;}=string.Empty; [Required,StringLength(4000)] public string Body {get;set;}=string.Empty; [Required,StringLength(300)] public string Audience {get;set;}="All"; public DateTime? DeadlineUtc {get;set;} public DateTime? ReminderAtUtc {get;set;} [Required,StringLength(20)] public string Priority {get;set;}="Normal"; public DateTime PublishedAtUtc {get;set;}=DateTime.UtcNow; [Required,StringLength(450)] public string PublishedByUserId {get;set;}=string.Empty; public bool IsPublished {get;set;}=true; }

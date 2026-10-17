@@ -1,10 +1,9 @@
 namespace ArnoxPay.Models.ViewModels;
-
 public class AccommodationDetailsViewModel
 {
-    public Accomodation Accomodation { get; set; }
-    = new();
+    public Accomodation Accomodation { get; set; } = new();
     public int OccupiedPlaces { get; set; }
     public bool HasPendingRequest { get; set; }
     public bool IsCurrentResident { get; set; }
+    public int AvailablePlaces => Math.Max(0, Accomodation.Capacity - OccupiedPlaces);
 }

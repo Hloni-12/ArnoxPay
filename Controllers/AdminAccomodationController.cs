@@ -17,14 +17,14 @@ public class AdminAccomodationController(AppDbContext context, IFileStorageServi
         if (id == 0) return View(new AccomodationEditModel());
         var item = await context.Accomodations.FindAsync(id);
         if (item is null) return NotFound();
-        return View(new AccomodationEditModel { Id = item.Id, Name = item.Name, UnitNumber = item.UnitNumber, Address = item.Address, AccommodationType = item.AccommodationType, Capacity = item.Capacity, Description = item.Description, IsActive = item.IsActive });
+        return View(new AccomodationEditModel { Id = item.Id, Name = item.Name, UnitNumber = item.UnitNumber, Address = item.Address, AccommodationType = item.AccommodationType, Capacity = item.Capacity, Description = item.Description, IsActive = item.IsActive, RoomType = item.RoomType, MonthlyRent = item.MonthlyRent });
     }
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddUpdate(AccomodationEditModel model)
     {
         if (!ModelState.IsValid) return View(model);
-        if (model.Id == 0) context.Accomodations.Add(new Accomodation { Name = model.Name, UnitNumber = model.UnitNumber, Address = model.Address, AccommodationType = model.AccommodationType, Capacity = model.Capacity, Description = model.Description, IsActive = model.IsActive });
+        if (model.Id == 0) context.Accomodations.Add(new Accomodation { Name = model.Name, UnitNumber = model.UnitNumber, Address = model.Address, AccommodationType = model.AccommodationType, Capacity = model.Capacity, Description = model.Description, IsActive = model.IsActive, RoomType = model.RoomType, MonthlyRent = model.MonthlyRent });
         else {
             var item = await context.Accomodations.FindAsync(model.Id);
             if (item is null) return NotFound();
@@ -34,6 +34,8 @@ public class AdminAccomodationController(AppDbContext context, IFileStorageServi
             item.AccommodationType = model.AccommodationType;
             item.Capacity = model.Capacity;
             item.Description = model.Description;
+            item.RoomType = model.RoomType;
+            item.MonthlyRent = model.MonthlyRent;
             item.IsActive = model.IsActive;
         }
         await context.SaveChangesAsync();
@@ -91,12 +93,37 @@ public class AdminAccomodationController(AppDbContext context, IFileStorageServi
             TempData["Error"] = "This accomodation has reached its capacity.";
             return RedirectToAction(nameof(AssignmentRequests));
         }
+        if (model.Status == AccommodationAssignmentStatus.Approved)
+        {
+            request.AdministratorNote = "Your residence application has been approved.";
+        }
+        else if (model.Status is AccommodationAssignmentStatus.Rejected or AccommodationAssignmentStatus.Cancelled)
+        {
+            if (string.IsNullOrWhiteSpace(model.AdministratorNote))
+            {
+                TempData["Error"] = "A rejection reason is required.";
+                return RedirectToAction(nameof(AssignmentRequests));
+            }
+            request.AdministratorNote = model.AdministratorNote.Trim();
+        }
+        else
+        {
+            TempData["Error"] = "Unsupported decision.";
+            return RedirectToAction(nameof(AssignmentRequests));
+        }
         request.Status = model.Status;
-        request.AdministratorNote = model.AdministratorNote;
         request.ReviewedAtUtc = DateTime.UtcNow;
         if (model.Status == AccommodationAssignmentStatus.Approved) request.Customer.AccomodationId = request.AccomodationId;
         await context.SaveChangesAsync();
-        await notifications.CreateAsync(request.CustomerId, "Accommodation request reviewed", $"Your request for {request.Accomodation.Name} was {request.Status.ToString().ToLowerInvariant()}.");
+        var customerMessage = model.Status == AccommodationAssignmentStatus.Approved
+            ? "Your residence application has been approved."
+            : request.AdministratorNote!;
+        await notifications.CreateAsync(
+            request.CustomerId,
+            model.Status == AccommodationAssignmentStatus.Approved
+                ? "Residence application approved"
+                : "Residence application rejected",
+            customerMessage);
         TempData["Success"] = "Accommodation request reviewed.";
         return RedirectToAction(nameof(AssignmentRequests));
     }
