@@ -10,8 +10,8 @@ namespace ArnoxPay.Data;
 /// </summary>
 public static class AdministratorAccountSeeder
 {
-    public const string DefaultAdminEmail = "administration@ufs.ac.za";
-    public const string DefaultAdminPassword = "Admin@12345";
+    public const string DefaultAdminEmail = "";
+    public const string DefaultAdminPassword = "";
 
     public static async Task SeedAsync(IServiceProvider services)
     {
