@@ -6,7 +6,15 @@
     <div class="content-card">
         <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 4 · Authenticate transaction</p>
         <h1 class="page-title h3 mb-3">Confirm payment submission</h1>
-        <p class="text-muted">Confirm to record this payment in ArnoxPay for Financial Officer review. Cancelling will mark the payment as failed.</p>
+        @if (string.Equals(Model.PaymentMethod, "EFT", StringComparison.OrdinalIgnoreCase))
+        {
+            <div class="alert alert-warning" role="status">This only submits your EFT claim to ArnoxPay. No bank transfer is initiated or checked by the app. A Financial Officer must match the money received against your reference before approval.</div>
+            <p class="text-muted">Confirm only after you have made the bank transfer. Cancelling marks this payment as not completed.</p>
+        }
+        else
+        {
+            <p class="text-muted">Confirm to record this payment in ArnoxPay for Financial Officer review. Cancelling will mark the payment as failed.</p>
+        }
 
         <dl class="row">
             <dt class="col-sm-4">Transaction</dt><dd class="col-sm-8 fw-semibold">@Model.TransactionReference</dd>
@@ -20,7 +28,7 @@
 
         <form method="post" class="d-flex flex-wrap gap-2 mt-3">
             @Html.AntiForgeryToken()
-			<button type="submit" name="action" value="confirm" class="btn btn-primary btn-lg">Confirm Payment</button>
+			<button type="submit" name="action" value="confirm" class="btn btn-primary btn-lg">@(string.Equals(Model.PaymentMethod, "EFT", StringComparison.OrdinalIgnoreCase) ? "Submit EFT for review" : "Confirm Payment")</button>
             <button type="submit" name="action" value="cancel" class="btn btn-outline-danger btn-lg">Cancel</button>
         </form>
     </div>

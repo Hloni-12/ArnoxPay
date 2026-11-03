@@ -1,5 +1,7 @@
+using System.Data;
 using ArnoxPay.Data;
 using ArnoxPay.Models;
+using ArnoxPay.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,7 +14,8 @@ namespace ArnoxPay.Controllers;
 public class VehicleController(
     AppDbContext context,
     UserManager<AppUser> userManager,
-    IOptions<FeeSettings> feeOptions) : Controller
+    IOptions<FeeSettings> feeOptions,
+    ILogger<VehicleController> logger) : Controller
 {
     private readonly FeeSettings _fees = feeOptions.Value;
 
@@ -48,64 +51,83 @@ public class VehicleController(
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(string registrationNumber, string? make, string? model, string? colour)
+    public async Task<IActionResult> Create(VehicleRegistrationInput input)
     {
         var customer = await CurrentCustomerAsync();
         if (customer is null) return Challenge();
 
-        registrationNumber = (registrationNumber ?? "").Trim().ToUpperInvariant();
-        if (string.IsNullOrWhiteSpace(registrationNumber))
+        if (!ModelState.IsValid)
         {
-            TempData["Error"] = "Registration number is required.";
+            TempData["Error"] = "Check the vehicle details: registration numbers are limited to 20 characters, make and model to 60, and colour to 40.";
             return RedirectToAction(nameof(Index));
         }
 
-        // Use a transaction to prevent two simultaneous registrations receiving the same position.
-        await using var tx = await context.Database.BeginTransactionAsync();
+        var registrationNumber = input.RegistrationNumber.Trim().ToUpperInvariant();
+
+        // Serializable isolation makes the per-customer vehicle position reliable when two requests arrive together.
+        await using var tx = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
         try
         {
-            var exists = await context.Vehicles.AnyAsync(x => x.RegistrationNumber == registrationNumber);
-            if (exists)
+            var existingVehicle = await context.Vehicles
+                .SingleOrDefaultAsync(x => x.RegistrationNumber == registrationNumber);
+
+            if (existingVehicle is { IsActive: true })
             {
                 TempData["Error"] = "Vehicle registration already exists.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (existingVehicle is not null && existingVehicle.CustomerId != customer.Id)
+            {
+                TempData["Error"] = "This vehicle is registered to another customer. Contact administration if ownership has changed.";
                 return RedirectToAction(nameof(Index));
             }
 
             var existingCount = await context.Vehicles.CountAsync(x => x.CustomerId == customer.Id && x.IsActive);
             var position = existingCount + 1;
             var fee = position == 1 ? _fees.FirstVehicleFee : (_fees.SubsequentVehicleFee ?? 0m);
+            var reactivated = existingVehicle is not null;
 
-            context.Vehicles.Add(new Vehicle
+            var vehicle = existingVehicle ?? new Vehicle
             {
                 CustomerId = customer.Id,
-                RegistrationNumber = registrationNumber,
-                Make = make?.Trim(),
-                Model = model?.Trim(),
-                Colour = colour?.Trim(),
-                RegisteredAtUtc = DateTime.UtcNow,
-                IsActive = true
-            });
+                RegistrationNumber = registrationNumber
+            };
+
+            vehicle.Make = input.Make?.Trim();
+            vehicle.Model = input.Model?.Trim();
+            vehicle.Colour = input.Colour?.Trim();
+            vehicle.RegisteredAtUtc = DateTime.UtcNow;
+            vehicle.IsActive = true;
+
+            if (!reactivated)
+                context.Vehicles.Add(vehicle);
+
             await context.SaveChangesAsync();
             await tx.CommitAsync();
 
             if (position == 1)
             {
-                TempData["Success"] = $"First vehicle registered ({registrationNumber}). Registration fee: R0.00.";
+                TempData["Success"] = reactivated
+                    ? $"Vehicle reactivated ({registrationNumber}). Registration fee: R0.00."
+                    : $"First vehicle registered ({registrationNumber}). Registration fee: R0.00.";
                 return RedirectToAction(nameof(Index));
             }
 
             // Second and subsequent: require payment of the configured fee via parking/vehicle fee flow.
-            TempData["Success"] = $"Vehicle #{position} registered ({registrationNumber}). Applicable fee: {fee:C}. Please complete payment.";
-            TempData["SecondCarPermit"] = "true";
-            TempData["SecondCarReg"] = registrationNumber;
-            TempData["VehiclePosition"] = position.ToString();
-            TempData["VehicleFee"] = fee.ToString("F2");
-            return RedirectToAction("Checkout", "Payment", new { type = PaymentType.Parking });
+            TempData["Success"] = $"Vehicle #{position} {(reactivated ? "reactivated" : "registered")} ({registrationNumber}). Applicable fee: {fee:C}. Please complete payment.";
+            return RedirectToAction("Checkout", "Payment", new { type = PaymentType.Parking, vehicleId = vehicle.Id });
         }
-        catch
+        catch (DbUpdateException ex)
         {
-            await tx.RollbackAsync();
-            TempData["Error"] = "Could not register vehicle. Please try again.";
+            logger.LogWarning(ex, "Vehicle registration could not be saved for customer {CustomerId} and registration {RegistrationNumber}.", customer.Id, registrationNumber);
+            TempData["Error"] = "The vehicle could not be saved. It may have just been registered already; refresh the list and try again.";
+            return RedirectToAction(nameof(Index));
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected vehicle registration failure for customer {CustomerId} and registration {RegistrationNumber}.", customer.Id, registrationNumber);
+            TempData["Error"] = "Vehicle registration is temporarily unavailable. Please try again shortly.";
             return RedirectToAction(nameof(Index));
         }
     }

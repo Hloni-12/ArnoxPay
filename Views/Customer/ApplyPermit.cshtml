@@ -48,6 +48,12 @@ else
                     <option>Semester</option>
                 </select>
             </div>
+            <fieldset class="mb-4">
+                <legend class="form-label h6">Do you require an accessible parking permit?</legend>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="requiresAccessibleParking" id="accessibleParkingYes" value="true"/><label class="form-check-label" for="accessibleParkingYes">Yes</label></div>
+                <div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="requiresAccessibleParking" id="accessibleParkingNo" value="false" checked/><label class="form-check-label" for="accessibleParkingNo">No</label></div>
+                <div class="form-text">Choose Yes if the permit is for a person with disability-related access needs. No diagnosis details are needed.</div>
+            </fieldset>
             <div class="mb-4">
                 <label class="form-label">Amount payable</label>
                 <input type="text" class="form-control fw-bold text-success" value="R0.00" readonly />

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ArnoxPay.Migrations
 {
     /// <inheritdoc />
-    public partial class INITIAL : Migration
+    public partial class initial : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -15,19 +15,19 @@ namespace ArnoxPay.Migrations
                 name: "Accomodations",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
-                    UnitNumber = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
-                    Corridor = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
-                    RoomNumber = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
-                    Address = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    AccommodationType = table.Column<int>(type: "int", nullable: false),
-                    Capacity = table.Column<int>(type: "int", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
+                    UnitNumber = table.Column<string>(type: "TEXT", maxLength: 40, nullable: false),
+                    Corridor = table.Column<string>(type: "TEXT", maxLength: 80, nullable: true),
+                    RoomNumber = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true),
+                    Address = table.Column<string>(type: "TEXT", maxLength: 200, nullable: false),
+                    AccommodationType = table.Column<int>(type: "INTEGER", nullable: false),
+                    Capacity = table.Column<int>(type: "INTEGER", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
                     MonthlyRent = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
-                    RoomType = table.Column<int>(type: "int", nullable: true)
+                    RoomType = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -38,17 +38,17 @@ namespace ArnoxPay.Migrations
                 name: "Announcements",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Body = table.Column<string>(type: "nvarchar(4000)", maxLength: 4000, nullable: false),
-                    Audience = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: false),
-                    DeadlineUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReminderAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Priority = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    PublishedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    PublishedByUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    IsPublished = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
+                    Body = table.Column<string>(type: "TEXT", maxLength: 4000, nullable: false),
+                    Audience = table.Column<string>(type: "TEXT", maxLength: 300, nullable: false),
+                    DeadlineUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ReminderAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Priority = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    PublishedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    PublishedByUserId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    IsPublished = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -59,10 +59,10 @@ namespace ArnoxPay.Migrations
                 name: "AspNetRoles",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    NormalizedName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -73,25 +73,25 @@ namespace ArnoxPay.Migrations
                 name: "AspNetUsers",
                 columns: table => new
                 {
-                    Id = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    NormalizedEmail = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
-                    EmailConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    SecurityStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ConcurrencyStamp = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PhoneNumberConfirmed = table.Column<bool>(type: "bit", nullable: false),
-                    TwoFactorEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    LockoutEnd = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: true),
-                    LockoutEnabled = table.Column<bool>(type: "bit", nullable: false),
-                    AccessFailedCount = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<string>(type: "TEXT", nullable: false),
+                    FirstName = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
+                    LastName = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    UserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    NormalizedUserName = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    Email = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    NormalizedEmail = table.Column<string>(type: "TEXT", maxLength: 256, nullable: true),
+                    EmailConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    PasswordHash = table.Column<string>(type: "TEXT", nullable: true),
+                    SecurityStamp = table.Column<string>(type: "TEXT", nullable: true),
+                    ConcurrencyStamp = table.Column<string>(type: "TEXT", nullable: true),
+                    PhoneNumber = table.Column<string>(type: "TEXT", nullable: true),
+                    PhoneNumberConfirmed = table.Column<bool>(type: "INTEGER", nullable: false),
+                    TwoFactorEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    LockoutEnd = table.Column<DateTimeOffset>(type: "TEXT", nullable: true),
+                    LockoutEnabled = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AccessFailedCount = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -102,12 +102,12 @@ namespace ArnoxPay.Migrations
                 name: "ParkingAreas",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    Name = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
-                    Location = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    Capacity = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    Name = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
+                    Location = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    Capacity = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -118,13 +118,13 @@ namespace ArnoxPay.Migrations
                 name: "StaffMessages",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SenderUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    RecipientUserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    Body = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    SentAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReadAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    SenderUserId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    RecipientUserId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    Body = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    SentAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReadAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -135,15 +135,15 @@ namespace ArnoxPay.Migrations
                 name: "StaffNotifications",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", maxLength: 450, nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    Url = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReadAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<string>(type: "TEXT", maxLength: 450, nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    Url = table.Column<string>(type: "TEXT", maxLength: 300, nullable: true),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReadAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -154,13 +154,13 @@ namespace ArnoxPay.Migrations
                 name: "AccomodationImages",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AccomodationId = table.Column<int>(type: "int", nullable: false),
-                    ImagePath = table.Column<string>(type: "nvarchar(260)", maxLength: 260, nullable: false),
-                    Caption = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: true),
-                    IsPrimary = table.Column<bool>(type: "bit", nullable: false),
-                    UploadedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AccomodationId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ImagePath = table.Column<string>(type: "TEXT", maxLength: 260, nullable: false),
+                    Caption = table.Column<string>(type: "TEXT", maxLength: 160, nullable: true),
+                    IsPrimary = table.Column<bool>(type: "INTEGER", nullable: false),
+                    UploadedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -177,11 +177,11 @@ namespace ArnoxPay.Migrations
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    RoleId = table.Column<string>(type: "TEXT", nullable: false),
+                    ClaimType = table.Column<string>(type: "TEXT", nullable: true),
+                    ClaimValue = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -198,11 +198,11 @@ namespace ArnoxPay.Migrations
                 name: "AspNetUserClaims",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ClaimType = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ClaimValue = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    UserId = table.Column<string>(type: "TEXT", nullable: false),
+                    ClaimType = table.Column<string>(type: "TEXT", nullable: true),
+                    ClaimValue = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -219,10 +219,10 @@ namespace ArnoxPay.Migrations
                 name: "AspNetUserLogins",
                 columns: table => new
                 {
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderKey = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    ProviderDisplayName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
+                    ProviderKey = table.Column<string>(type: "TEXT", nullable: false),
+                    ProviderDisplayName = table.Column<string>(type: "TEXT", nullable: true),
+                    UserId = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -239,8 +239,8 @@ namespace ArnoxPay.Migrations
                 name: "AspNetUserRoles",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    RoleId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                    UserId = table.Column<string>(type: "TEXT", nullable: false),
+                    RoleId = table.Column<string>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -263,10 +263,10 @@ namespace ArnoxPay.Migrations
                 name: "AspNetUserTokens",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    LoginProvider = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Name = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Value = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    UserId = table.Column<string>(type: "TEXT", nullable: false),
+                    LoginProvider = table.Column<string>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false),
+                    Value = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -283,14 +283,14 @@ namespace ArnoxPay.Migrations
                 name: "Customers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Category = table.Column<int>(type: "int", nullable: false),
-                    UserNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    UniversityNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: true),
-                    ResidentialAddress = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    AccomodationId = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AppUserId = table.Column<string>(type: "TEXT", nullable: false),
+                    Category = table.Column<int>(type: "INTEGER", nullable: false),
+                    UserNumber = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
+                    UniversityNumber = table.Column<string>(type: "TEXT", maxLength: 30, nullable: true),
+                    ResidentialAddress = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    AccomodationId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -313,12 +313,12 @@ namespace ArnoxPay.Migrations
                 name: "FinancialOfficers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AppUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    EmployeeNumber = table.Column<string>(type: "nvarchar(30)", maxLength: 30, nullable: false),
-                    IsAuthorized = table.Column<bool>(type: "bit", nullable: false),
-                    AuthorizedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AppUserId = table.Column<string>(type: "TEXT", nullable: false),
+                    EmployeeNumber = table.Column<string>(type: "TEXT", maxLength: 30, nullable: false),
+                    IsAuthorized = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AuthorizedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -335,12 +335,12 @@ namespace ArnoxPay.Migrations
                 name: "ParkingBays",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    ParkingAreaId = table.Column<int>(type: "int", nullable: false),
-                    BayNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    BayType = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    ParkingAreaId = table.Column<int>(type: "INTEGER", nullable: false),
+                    BayNumber = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    BayType = table.Column<string>(type: "TEXT", maxLength: 40, nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -357,16 +357,17 @@ namespace ArnoxPay.Migrations
                 name: "AccommodationAssignmentRequests",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    AccomodationId = table.Column<int>(type: "int", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    CustomerNote = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    AdministratorNote = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    RequestedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReviewedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    AccomodationId1 = table.Column<int>(type: "int", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    AccomodationId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    CustomerNote = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    RequiresAccessibleRoom = table.Column<bool>(type: "INTEGER", nullable: false),
+                    AdministratorNote = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    RequestedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReviewedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    AccomodationId1 = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -394,17 +395,17 @@ namespace ArnoxPay.Migrations
                 name: "AccommodationIssues",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    AccomodationId = table.Column<int>(type: "int", nullable: false),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    Category = table.Column<int>(type: "int", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(160)", maxLength: 160, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(2000)", maxLength: 2000, nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    ResolutionNote = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: true),
-                    ReportedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ResolvedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    AccomodationId = table.Column<int>(type: "INTEGER", nullable: false),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Category = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 160, nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 2000, nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    ResolutionNote = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
+                    ReportedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ResolvedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -427,11 +428,11 @@ namespace ArnoxPay.Migrations
                 name: "CampusAccounts",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
                     Balance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    UpdatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -448,15 +449,15 @@ namespace ArnoxPay.Migrations
                 name: "Notifications",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(150)", maxLength: 150, nullable: false),
-                    Message = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
-                    LinkUrl = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    IsRead = table.Column<bool>(type: "bit", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReadAt = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Title = table.Column<string>(type: "TEXT", maxLength: 150, nullable: false),
+                    Message = table.Column<string>(type: "TEXT", maxLength: 500, nullable: false),
+                    LinkUrl = table.Column<string>(type: "TEXT", maxLength: 300, nullable: true),
+                    IsRead = table.Column<bool>(type: "INTEGER", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReadAt = table.Column<DateTime>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -473,13 +474,13 @@ namespace ArnoxPay.Migrations
                 name: "ServiceReviews",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    Rating = table.Column<int>(type: "int", nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: false),
-                    Comment = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    Rating = table.Column<int>(type: "INTEGER", nullable: false),
+                    Category = table.Column<string>(type: "TEXT", maxLength: 80, nullable: false),
+                    Comment = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -496,15 +497,15 @@ namespace ArnoxPay.Migrations
                 name: "Vehicles",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    RegistrationNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    Make = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: true),
-                    Model = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: true),
-                    Colour = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
-                    RegisteredAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    RegistrationNumber = table.Column<string>(type: "TEXT", maxLength: 20, nullable: false),
+                    Make = table.Column<string>(type: "TEXT", maxLength: 60, nullable: true),
+                    Model = table.Column<string>(type: "TEXT", maxLength: 60, nullable: true),
+                    Colour = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true),
+                    RegisteredAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    IsActive = table.Column<bool>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -521,26 +522,26 @@ namespace ArnoxPay.Migrations
                 name: "Payments",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    PaymentType = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PaymentType = table.Column<int>(type: "INTEGER", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    AccountReference = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
-                    Notes = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    TransactionReference = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
-                    PaymentMethod = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
-                    SubmittedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    AuthenticatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ProcessingStartedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    CompletedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReviewedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    FailureReason = table.Column<string>(type: "nvarchar(300)", maxLength: 300, nullable: true),
-                    FinancialOfficerId = table.Column<int>(type: "int", nullable: true),
-                    OfficerReference = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
-                    MaskedCardDisplay = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
-                    IdempotencyKey = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: true)
+                    AccountReference = table.Column<string>(type: "TEXT", maxLength: 120, nullable: false),
+                    Notes = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    TransactionReference = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true),
+                    PaymentMethod = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true),
+                    SubmittedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    AuthenticatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ProcessingStartedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    CompletedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ReviewedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    FailureReason = table.Column<string>(type: "TEXT", maxLength: 300, nullable: true),
+                    FinancialOfficerId = table.Column<int>(type: "INTEGER", nullable: true),
+                    OfficerReference = table.Column<string>(type: "TEXT", maxLength: 100, nullable: true),
+                    MaskedCardDisplay = table.Column<string>(type: "TEXT", maxLength: 40, nullable: true),
+                    IdempotencyKey = table.Column<string>(type: "TEXT", maxLength: 64, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -563,17 +564,17 @@ namespace ArnoxPay.Migrations
                 name: "CampusAccountTransfers",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CampusAccountId = table.Column<int>(type: "int", nullable: false),
-                    TransferReference = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    CampusAccountId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TransferReference = table.Column<string>(type: "TEXT", maxLength: 40, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     BalanceBefore = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
                     BalanceAfter = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    FundingSource = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
-                    PaymentId = table.Column<int>(type: "int", nullable: true),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                    Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    FundingSource = table.Column<string>(type: "TEXT", maxLength: 80, nullable: true),
+                    PaymentId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -590,19 +591,20 @@ namespace ArnoxPay.Migrations
                 name: "ParkingPermits",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PermitNumber = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
-                    CustomerId = table.Column<int>(type: "int", nullable: false),
-                    VehicleId = table.Column<int>(type: "int", nullable: false),
-                    PermitType = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
-                    IssueDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PermitNumber = table.Column<string>(type: "TEXT", maxLength: 40, nullable: false),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: false),
+                    VehicleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PermitType = table.Column<string>(type: "TEXT", maxLength: 40, nullable: false),
+                    RequiresAccessibleParking = table.Column<bool>(type: "INTEGER", nullable: false),
+                    IssueDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExpiryDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
                     Fee = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    AppliedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ReviewedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ReviewNote = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: true)
+                    AppliedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ReviewedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ReviewNote = table.Column<string>(type: "TEXT", maxLength: 500, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -625,13 +627,13 @@ namespace ArnoxPay.Migrations
                 name: "ParkingSessions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    VehicleId = table.Column<int>(type: "int", nullable: false),
-                    ParkingBayId = table.Column<int>(type: "int", nullable: false),
-                    EntryTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    ExitTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    Status = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    VehicleId = table.Column<int>(type: "INTEGER", nullable: false),
+                    ParkingBayId = table.Column<int>(type: "INTEGER", nullable: false),
+                    EntryTime = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    ExitTime = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
                     Fee = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
@@ -655,21 +657,21 @@ namespace ArnoxPay.Migrations
                 name: "PaymentItems",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PaymentId = table.Column<int>(type: "int", nullable: false),
-                    PaymentType = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    PaymentType = table.Column<int>(type: "INTEGER", nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
-                    VehicleId = table.Column<int>(type: "int", nullable: true),
-                    VehicleRegistration = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    OutstandingChargeKey = table.Column<string>(type: "nvarchar(80)", maxLength: 80, nullable: true),
-                    IsPaid = table.Column<bool>(type: "bit", nullable: false),
+                    Description = table.Column<string>(type: "TEXT", maxLength: 200, nullable: true),
+                    VehicleId = table.Column<int>(type: "INTEGER", nullable: true),
+                    VehicleRegistration = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    OutstandingChargeKey = table.Column<string>(type: "TEXT", maxLength: 80, nullable: true),
+                    IsPaid = table.Column<bool>(type: "INTEGER", nullable: false),
                     Quantity = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
                     UnitPrice = table.Column<decimal>(type: "decimal(18,4)", nullable: true),
-                    UnitOfMeasure = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
-                    AccomodationId = table.Column<int>(type: "int", nullable: true),
-                    VehiclePosition = table.Column<int>(type: "int", nullable: true)
+                    UnitOfMeasure = table.Column<string>(type: "TEXT", maxLength: 20, nullable: true),
+                    AccomodationId = table.Column<int>(type: "INTEGER", nullable: true),
+                    VehiclePosition = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -698,17 +700,17 @@ namespace ArnoxPay.Migrations
                 name: "Transactions",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    PaymentId = table.Column<int>(type: "int", nullable: false),
-                    TransactionReference = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: false),
+                    Id = table.Column<int>(type: "INTEGER", nullable: false)
+                        .Annotation("Sqlite:Autoincrement", true),
+                    PaymentId = table.Column<int>(type: "INTEGER", nullable: false),
+                    TransactionReference = table.Column<string>(type: "TEXT", maxLength: 40, nullable: false),
                     Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    Status = table.Column<int>(type: "int", nullable: false),
-                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    CompletedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    ProcessedByFinancialOfficerId = table.Column<int>(type: "int", nullable: true),
-                    CustomerId = table.Column<int>(type: "int", nullable: true),
-                    FinancialOfficerId = table.Column<int>(type: "int", nullable: true)
+                    Status = table.Column<int>(type: "INTEGER", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    CompletedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: true),
+                    ProcessedByFinancialOfficerId = table.Column<int>(type: "INTEGER", nullable: true),
+                    CustomerId = table.Column<int>(type: "INTEGER", nullable: true),
+                    FinancialOfficerId = table.Column<int>(type: "INTEGER", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -787,8 +789,7 @@ namespace ArnoxPay.Migrations
                 name: "RoleNameIndex",
                 table: "AspNetRoles",
                 column: "NormalizedName",
-                unique: true,
-                filter: "[NormalizedName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUserClaims_UserId",
@@ -814,8 +815,7 @@ namespace ArnoxPay.Migrations
                 name: "UserNameIndex",
                 table: "AspNetUsers",
                 column: "NormalizedUserName",
-                unique: true,
-                filter: "[NormalizedUserName] IS NOT NULL");
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CampusAccounts_CustomerId",

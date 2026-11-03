@@ -58,7 +58,7 @@
     {
         <div class="table-responsive">
             <table class="table table-hover mb-0">
-                <thead><tr><th>Permit #</th><th>Vehicle</th><th>Type</th><th>Expires</th><th>Status</th></tr></thead>
+                <thead><tr><th>Permit #</th><th>Vehicle</th><th>Type</th><th>Accessibility</th><th>Expires</th><th>Status</th></tr></thead>
                 <tbody>
                 @foreach (var p in Model)
                 {
@@ -66,6 +66,7 @@
                         <td class="fw-semibold">@p.PermitNumber</td>
                         <td>@(p.Vehicle?.RegistrationNumber ?? "—")</td>
                         <td>@p.PermitType</td>
+                        <td>@(p.RequiresAccessibleParking ? "Accessible parking requested" : "No accessibility request")</td>
                         <td>@p.ExpiryDate.ToString("dd MMM yyyy")</td>
                         <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
                     </tr>

@@ -77,29 +77,87 @@ public class PaymentController(AppDbContext context, UserManager<AppUser> userMa
     public IActionResult AddUpdate(PaymentType? type = null) => RedirectToAction(nameof(Checkout), new { type });
 
     [Authorize(Roles = SystemRoles.Customer), HttpGet]
-    public IActionResult Checkout(PaymentType? type = null)
+    public async Task<IActionResult> Checkout(PaymentType? type = null, int? vehicleId = null)
     {
         var model = new PaymentCreateModel();
         if (type.HasValue)
             model.PaymentType = type.Value;
-        // Prefill when redirected after registering a second vehicle (second-car parking permit)
-        if (TempData["SecondCarPermit"] as string == "true")
+
+        if (!vehicleId.HasValue)
+            return View(model);
+
+        var customer = await CurrentCustomer();
+        if (customer is null) return NotFound();
+
+        var vehicle = await context.Vehicles.FirstOrDefaultAsync(v =>
+            v.Id == vehicleId.Value && v.CustomerId == customer.Id && v.IsActive);
+        if (vehicle is null) return NotFound();
+
+        var position = await context.Vehicles.CountAsync(v =>
+            v.CustomerId == customer.Id && v.IsActive &&
+            (v.RegisteredAtUtc < vehicle.RegisteredAtUtc ||
+             (v.RegisteredAtUtc == vehicle.RegisteredAtUtc && v.Id <= vehicle.Id)));
+
+        if (position <= 1)
         {
-            model.PaymentType = PaymentType.Parking;
-            model.Notes = "Second-car parking permit" + (TempData["SecondCarReg"] is string reg ? $" for {reg}" : "");
-            if (TempData["Success"] != null)
-                TempData.Keep("Success");
-            TempData.Keep("SecondCarPermit");
+            TempData["Error"] = "The first registered vehicle has no additional registration fee.";
+            return RedirectToAction("Index", "Vehicle");
         }
+
+        var fee = feeOptions.Value.SubsequentVehicleFee;
+        if (!fee.HasValue || fee.Value <= 0m)
+        {
+            TempData["Error"] = "The additional vehicle registration fee is not configured. Contact administration.";
+            return RedirectToAction("Index", "Vehicle");
+        }
+
+        model.PaymentType = PaymentType.Parking;
+        model.Amount = fee.Value;
+        model.AccountReference = $"Vehicle registration: {vehicle.RegistrationNumber}";
+        model.Notes = $"Vehicle registration fee for {vehicle.RegistrationNumber}";
+        model.VehicleId = vehicle.Id;
         return View(model);
     }
 
     [Authorize(Roles = SystemRoles.Customer), HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Checkout(PaymentCreateModel model)
     {
-        if (!ModelState.IsValid) return View(model);
         var c = await CurrentCustomer();
         if (c is null) return NotFound();
+
+        if (model.VehicleId.HasValue)
+        {
+            // Do not trust any price or account reference posted by the browser for this fixed fee.
+            ModelState.Remove(nameof(model.Amount));
+            ModelState.Remove(nameof(model.AccountReference));
+
+            var vehicle = await context.Vehicles.FirstOrDefaultAsync(v =>
+                v.Id == model.VehicleId.Value && v.CustomerId == c.Id && v.IsActive);
+            if (vehicle is null)
+                ModelState.AddModelError(string.Empty, "Select a valid registered vehicle.");
+            else
+            {
+                var position = await context.Vehicles.CountAsync(v =>
+                    v.CustomerId == c.Id && v.IsActive &&
+                    (v.RegisteredAtUtc < vehicle.RegisteredAtUtc ||
+                     (v.RegisteredAtUtc == vehicle.RegisteredAtUtc && v.Id <= vehicle.Id)));
+                var fee = feeOptions.Value.SubsequentVehicleFee;
+
+                if (position <= 1)
+                    ModelState.AddModelError(string.Empty, "The first registered vehicle has no additional registration fee.");
+                else if (!fee.HasValue || fee.Value <= 0m)
+                    ModelState.AddModelError(string.Empty, "The additional vehicle registration fee is not configured.");
+                else
+                {
+                    model.PaymentType = PaymentType.Parking;
+                    model.Amount = fee.Value;
+                    model.AccountReference = $"Vehicle registration: {vehicle.RegistrationNumber}";
+                    model.Notes = $"Vehicle registration fee for {vehicle.RegistrationNumber}";
+                }
+            }
+        }
+
+        if (!ModelState.IsValid) return View(model);
 
         var payment = await checkout.CreateCheckoutAsync(
             c.Id, model.PaymentType, model.Amount, model.AccountReference, model.Notes);

@@ -12,6 +12,7 @@ public class AccommodationAssignmentRequest
     = AccommodationAssignmentStatus.Pending;
     [StringLength(1000)]
     public string? CustomerNote { get; set; }
+    public bool RequiresAccessibleRoom { get; set; }
     [StringLength(1000)]
     public string? AdministratorNote { get; set; }
     public DateTime RequestedAtUtc { get; set; }

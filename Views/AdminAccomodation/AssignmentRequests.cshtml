@@ -24,9 +24,10 @@
 				<thead>
 					<tr>
 						<th>Customer</th>
-						<th>Accommodation</th>
-						<th>Requested</th>
-						<th>Customer note</th>
+							<th>Accommodation</th>
+							<th>Requested</th>
+							<th>Accessibility</th>
+							<th>Customer note</th>
 						<th>Status</th>
 						<th class="text-end">Review</th>
 					</tr>
@@ -43,8 +44,9 @@
 							@request.Accomodation?.Name
 							<br /><small>Unit @request.Accomodation?.UnitNumber</small>
 						</td>
-						<td>@request.RequestedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
-						<td>@(string.IsNullOrWhiteSpace(request.CustomerNote) ? "—" : request.CustomerNote)</td>
+							<td>@request.RequestedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+							<td>@if (request.RequiresAccessibleRoom) { <span class="badge text-bg-primary">Accessible room requested</span> } else { <span class="text-muted">No request</span> }</td>
+							<td>@(string.IsNullOrWhiteSpace(request.CustomerNote) ? "—" : request.CustomerNote)</td>
 						<td><partial name="_StatusBadge" model="@request.Status.ToString()" /></td>
 						<td class="text-end">
 						@if (request.Status == AccommodationAssignmentStatus.Pending)

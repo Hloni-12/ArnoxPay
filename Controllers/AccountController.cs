@@ -15,7 +15,8 @@ public class AccountController(
     RoleManager<IdentityRole> roleManager,
     SignInManager<AppUser> signInManager,
     INotificationService notifications,
-    MobileTokenService mobileTokens) : Controller
+    MobileTokenService mobileTokens,
+    IOneSignalPushService pushNotifications) : Controller
 {
     // =====================================================================
     //  SHARED LOGIN LOGIC (used by both website and Android API)
@@ -83,6 +84,8 @@ public class AccountController(
 
         // Create the cookie session for the website
         await signInManager.SignInAsync(user, isPersistent: false);
+        await pushNotifications.SendToUserAsync(user.Id, "New ArnoxPay sign-in",
+            "A successful sign-in was detected for your ArnoxPay account.", "home");
 
         var roles = await userManager.GetRolesAsync(user);
 
@@ -314,10 +317,13 @@ public class AccountController(
                  : SystemRoles.Customer;
 
         var token = mobileTokens.Issue(user.Id, await userManager.GetSecurityStampAsync(user));
+        await pushNotifications.SendToUserAsync(user.Id, "New ArnoxPay sign-in",
+            "A successful sign-in was detected for your ArnoxPay account.", "home");
 
         return Ok(new
         {
             success = true,
+            userId = user.Id,
             role,
             accessToken = token.AccessToken,
             tokenType = "Bearer",

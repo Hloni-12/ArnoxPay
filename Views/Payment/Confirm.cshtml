@@ -1,4 +1,5 @@
 @model Payment
+@inject IConfiguration Configuration
 @{
     ViewData["Title"] = "Confirm payment";
     var name = $"{Model.Customer?.AppUser?.FirstName} {Model.Customer?.AppUser?.LastName}".Trim();
@@ -6,19 +7,51 @@
     if (items.Count == 0)
         items.Add(new PaymentItem { PaymentType = Model.PaymentType, Amount = Model.Amount, Description = Model.PaymentType.ToString() });
     var methodDisplay = !string.IsNullOrEmpty(Model.MaskedCardDisplay) ? Model.MaskedCardDisplay : (Model.PaymentMethod ?? "—");
+    var isEft = string.Equals(Model.PaymentMethod, "EFT", StringComparison.OrdinalIgnoreCase);
 }
 <div class="fx-pay-shell">
     <div class="content-card">
         <p class="text-uppercase fw-semibold small mb-1" style="letter-spacing:.06em;color:#7c3aed">Step 3 · Confirm your payment</p>
         <h1 class="page-title h3 mb-2">Confirm Payment</h1>
-        <p class="text-muted">Confirm to send this payment for Financial Officer review. It will not be marked as paid until an officer accepts it.</p>
-
+        @if (isEft)
+        {
+            var bankName = Configuration["Eft:BankName"];
+            var accountName = Configuration["Eft:AccountName"];
+            var accountNumber = Configuration["Eft:AccountNumber"];
+            var branchCode = Configuration["Eft:BranchCode"];
+            var accountType = Configuration["Eft:AccountType"];
+            var configured = !string.IsNullOrWhiteSpace(bankName) && !string.IsNullOrWhiteSpace(accountName) && !string.IsNullOrWhiteSpace(accountNumber) && !string.IsNullOrWhiteSpace(branchCode);
+            <div class="alert @(configured ? "alert-info" : "alert-warning")" role="status">
+                <h2 class="h5">EFT / bank transfer instructions</h2>
+                @if (configured)
+                {
+                    <dl class="row mb-2">
+                        <dt class="col-sm-4">Bank</dt><dd class="col-sm-8">@bankName</dd>
+                        <dt class="col-sm-4">Account name</dt><dd class="col-sm-8">@accountName</dd>
+                        <dt class="col-sm-4">Account number</dt><dd class="col-sm-8">@accountNumber</dd>
+                        <dt class="col-sm-4">Branch code</dt><dd class="col-sm-8">@branchCode</dd>
+                        @if (!string.IsNullOrWhiteSpace(accountType)) { <dt class="col-sm-4">Account type</dt><dd class="col-sm-8">@accountType</dd> }
+                        <dt class="col-sm-4">Amount</dt><dd class="col-sm-8">R @Model.Amount.ToString("N2")</dd>
+                        <dt class="col-sm-4">Payment reference</dt><dd class="col-sm-8 fw-bold">@Model.TransactionReference</dd>
+                    </dl>
+                    <p class="mb-0">Use the payment reference exactly as shown. After making the transfer, confirm below. ArnoxPay does not verify bank transfers automatically; a Financial Officer must verify and approve it before it is marked paid.</p>
+                }
+                else
+                {
+                    <p class="mb-0">Bank details have not been configured. Do not transfer money until the operator supplies the bank name, account name, account number and branch code in the server's <code>Eft</code> configuration.</p>
+                }
+            </div>
+            <p class="text-muted">Submitting this screen records your EFT claim only; it does not initiate or verify a transfer.</p>
+        }
+        else
+        {
+            <p class="text-muted">Confirm to send this payment for Financial Officer review. It will not be marked as paid until an officer accepts it.</p>
+        }
         <ul class="list-unstyled mb-3">
             <li class="mb-1"><strong>Customer:</strong> @name</li>
             <li class="mb-1"><strong>Payment Method:</strong> @methodDisplay</li>
             <li class="mb-1"><strong>Reference:</strong> @Model.TransactionReference</li>
         </ul>
-
         <div class="table-responsive mb-4">
             <table class="table">
                 <thead><tr><th>Selected Services</th><th class="text-end">Amount</th></tr></thead>
@@ -34,13 +67,14 @@
                 </tbody>
             </table>
         </div>
-
-        <div class="fx-pay-summary mb-4">
-            <i class="fa-solid fa-lock me-2" aria-hidden="true"></i>
-            Status remains <strong>not paid</strong> until authentication, processing, and Financial Officer acceptance succeed.
-        </div>
-
-        <a class="btn btn-primary btn-lg" asp-action="Authenticate" asp-route-id="@Model.Id">Confirm &amp; Pay</a>
+        @if (!isEft)
+        {
+            <div class="fx-pay-summary mb-4">
+                <i class="fa-solid fa-lock me-2" aria-hidden="true"></i>
+                Status remains <strong>not paid</strong> until authentication, processing, and Financial Officer acceptance succeed.
+            </div>
+        }
+        <a class="btn btn-primary btn-lg" asp-action="Authenticate" asp-route-id="@Model.Id">@(isEft ? "Continue with EFT" : "Confirm and Pay")</a>
         <a class="btn btn-outline-secondary btn-lg" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
     </div>
 </div>

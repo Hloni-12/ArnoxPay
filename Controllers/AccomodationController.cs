@@ -53,7 +53,7 @@ public class AccomodationController(AppDbContext context, UserManager<AppUser> u
         if(customer.AccomodationId.HasValue || await context.AccommodationAssignmentRequests.AnyAsync(x=>x.CustomerId==customer.Id&&x.Status==AccommodationAssignmentStatus.Pending)) { TempData["Error"]="You already have a residence or pending request."; return RedirectToAction(nameof(List)); }
         var a=await context.Accomodations.Include(x=>x.Residents).FirstOrDefaultAsync(x=>x.Id==model.AccomodationId&&x.IsActive);
         if(a is null || a.Residents.Count>=a.Capacity) { TempData["Error"]="This accommodation is not available."; return RedirectToAction(nameof(List)); }
-        context.AccommodationAssignmentRequests.Add(new AccommodationAssignmentRequest { CustomerId=customer.Id, AccomodationId=a.Id, CustomerNote=string.IsNullOrWhiteSpace(model.CustomerNote)?null:model.CustomerNote.Trim(), Status=AccommodationAssignmentStatus.Pending, RequestedAtUtc=DateTime.UtcNow });
+        context.AccommodationAssignmentRequests.Add(new AccommodationAssignmentRequest { CustomerId=customer.Id, AccomodationId=a.Id, CustomerNote=string.IsNullOrWhiteSpace(model.CustomerNote)?null:model.CustomerNote.Trim(), RequiresAccessibleRoom=model.RequiresAccessibleRoom, Status=AccommodationAssignmentStatus.Pending, RequestedAtUtc=DateTime.UtcNow });
         await context.SaveChangesAsync(); TempData["Success"]="Your accommodation request was submitted."; return RedirectToAction(nameof(MyRequests));
     }
 

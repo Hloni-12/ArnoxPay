@@ -1,4 +1,5 @@
 using ArnoxPay.Data;
+using ArnoxPay.Infrastructure;
 using ArnoxPay.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -8,7 +9,12 @@ using Microsoft.EntityFrameworkCore;
 namespace ArnoxPay.Controllers;
 
 [Authorize(Roles = SystemRoles.Administrator + "," + SystemRoles.FinancialOfficer)]
-public class StaffCommunicationController(AppDbContext db, UserManager<AppUser> users) : Controller
+public class StaffCommunicationController(
+    AppDbContext db,
+    UserManager<AppUser> users,
+    IOneSignalPushService pushNotifications,
+    IEmailDeliveryService emailDelivery,
+    ILogger<StaffCommunicationController> logger) : Controller
 {
     public async Task<IActionResult> Index()
     {
@@ -46,6 +52,26 @@ public class StaffCommunicationController(AppDbContext db, UserManager<AppUser> 
         db.StaffMessages.Add(new StaffMessage { SenderUserId = me.Id, RecipientUserId = recipientUserId, Body = body.Trim() });
         db.StaffNotifications.Add(new StaffNotification { UserId = recipientUserId, Title = "New staff message", Message = $"New message from {me.FirstName} {me.LastName}.", Url = "/StaffCommunication/Index" });
         await db.SaveChangesAsync();
+
+        var senderName = (me.FirstName + " " + me.LastName).Trim();
+        var pushDelivered = await pushNotifications.SendToUserAsync(recipientUserId, "New ArnoxPay message",
+            $"{senderName} sent you a message. Sign in to ArnoxPay to read it.", "messages");
+        var recipient = recipients.First(x => x.Id == recipientUserId);
+        var emailDelivered = false;
+        if (!string.IsNullOrWhiteSpace(recipient.Email))
+        {
+            var emailBody = $"Hello {recipient.FirstName},\n\nYou have a new message from {senderName}:\n\n{body.Trim()}\n\nSign in to ArnoxPay to reply.\n\n— ArnoxPay";
+            emailDelivered = await emailDelivery.SendAsync(recipient.Email,
+                $"New ArnoxPay message from {senderName}", emailBody);
+            if (!emailDelivered) logger.LogWarning("Staff message was saved, but its recipient email was not delivered.");
+        }
+        else
+        {
+            logger.LogWarning("Staff message was saved, but recipient {RecipientUserId} has no email address.", recipientUserId);
+        }
+        TempData["Success"] = "Message saved.";
+        if (!emailDelivered || !pushDelivered)
+            TempData["Error"] = "The message is in the conversation, but an email or push alert could not be delivered. Check delivery settings.";
         return RedirectToAction(nameof(Index));
     }
 }

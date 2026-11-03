@@ -12,27 +12,45 @@
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger col-12"></div>
 
-            <div class="col-12">
-                <label asp-for="PaymentType" class="form-label fw-semibold">Service</label>
-                <select asp-for="PaymentType" asp-items="Html.GetEnumSelectList<PaymentType>()" class="form-select form-select-lg"></select>
-            </div>
+            @if (Model.VehicleId.HasValue)
+            {
+                <input asp-for="VehicleId" type="hidden" />
+                <input asp-for="PaymentType" type="hidden" />
+                <input asp-for="Amount" type="hidden" />
+                <input asp-for="AccountReference" type="hidden" />
+                <input asp-for="Notes" type="hidden" />
+                <div class="col-12">
+                    <div class="alert alert-info mb-0">
+                        <div class="fw-semibold">Vehicle registration fee</div>
+                        <div class="small">@Model.Notes</div>
+                        <div class="mt-2">Amount due: <strong>@Model.Amount.ToString("C")</strong></div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="col-12">
+                    <label asp-for="PaymentType" class="form-label fw-semibold">Service</label>
+                    <select asp-for="PaymentType" asp-items="Html.GetEnumSelectList<PaymentType>()" class="form-select form-select-lg"></select>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="Amount" class="form-label fw-semibold">Amount (R)</label>
-                <input asp-for="Amount" class="form-control form-control-lg" min="0.01" step="0.01" placeholder="0.00" />
-                <span asp-validation-for="Amount" class="text-danger small"></span>
-            </div>
+                <div class="col-md-6">
+                    <label asp-for="Amount" class="form-label fw-semibold">Amount (R)</label>
+                    <input asp-for="Amount" class="form-control form-control-lg" min="0.01" step="0.01" placeholder="0.00" />
+                    <span asp-validation-for="Amount" class="text-danger small"></span>
+                </div>
 
-            <div class="col-md-6">
-                <label asp-for="AccountReference" class="form-label fw-semibold">Account / meter reference</label>
-                <input asp-for="AccountReference" class="form-control form-control-lg" placeholder="e.g. meter or student number" />
-                <span asp-validation-for="AccountReference" class="text-danger small"></span>
-            </div>
+                <div class="col-md-6">
+                    <label asp-for="AccountReference" class="form-label fw-semibold">Account / meter reference</label>
+                    <input asp-for="AccountReference" class="form-control form-control-lg" placeholder="e.g. meter or student number" />
+                    <span asp-validation-for="AccountReference" class="text-danger small"></span>
+                </div>
 
-            <div class="col-12">
-                <label asp-for="Notes" class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
-                <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
-            </div>
+                <div class="col-12">
+                    <label asp-for="Notes" class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2"></textarea>
+                </div>
+            }
 
             <div class="col-12">
                 <div class="fx-pay-summary">

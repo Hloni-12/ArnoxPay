@@ -4,6 +4,7 @@ namespace ArnoxPay.Models.ViewModels;
 public class PaymentCreateModel
 {
     public PaymentType PaymentType { get; set; }
+    public int? VehicleId { get; set; }
     [Required, Range(0.01, 999999.99)]
     public decimal Amount { get; set; }
     [Required, StringLength(120)]

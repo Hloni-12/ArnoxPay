@@ -15,6 +15,7 @@
                 <th>Permit #</th>
                 <th>Customer</th>
                 <th>Vehicle</th>
+                <th>Accessibility</th>
                 <th>Applied</th>
                 <th>Status</th>
                 <th></th>
@@ -28,6 +29,7 @@
                 <td class="fw-semibold">@p.PermitNumber</td>
                 <td>@name</td>
                 <td>@(p.Vehicle?.RegistrationNumber ?? "—")</td>
+                <td>@if (p.RequiresAccessibleParking) { <span class="badge text-bg-primary">Accessible permit requested</span> } else { <span class="text-muted">No request</span> }</td>
                 <td>@p.AppliedAtUtc.ToString("dd MMM yyyy")</td>
                 <td><partial name="_StatusBadge" model="@p.Status.ToString()" /></td>
                 <td>

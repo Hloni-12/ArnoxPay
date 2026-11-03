@@ -88,7 +88,7 @@ public class CustomerController(AppDbContext context, UserManager<AppUser> userM
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ApplyPermit(int vehicleId, string permitType, decimal fee)
+    public async Task<IActionResult> ApplyPermit(int vehicleId, string permitType, decimal fee, bool requiresAccessibleParking)
     {
         var user = await userManager.GetUserAsync(User);
         if (user is null) return Challenge();
@@ -120,6 +120,7 @@ public class CustomerController(AppDbContext context, UserManager<AppUser> userM
             CustomerId = customer.Id,
             VehicleId = vehicle.Id,
             PermitType = string.IsNullOrWhiteSpace(permitType) ? "Student annual" : permitType.Trim(),
+            RequiresAccessibleParking = requiresAccessibleParking,
             IssueDate = DateTime.UtcNow.Date,
             ExpiryDate = DateTime.UtcNow.Date.AddYears(1),
             Status = ParkingPermitStatus.PendingApproval,

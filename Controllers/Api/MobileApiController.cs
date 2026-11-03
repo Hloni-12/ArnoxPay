@@ -1,7 +1,9 @@
+using System.Data;
 using System.Globalization;
 using ArnoxPay.Data;
 using ArnoxPay.Infrastructure;
 using ArnoxPay.Models;
+using ArnoxPay.Models.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -22,11 +24,13 @@ namespace ArnoxPay.Controllers.Api;
 public class MobileApiController(
     AppDbContext context,
     UserManager<AppUser> userManager,
+    SignInManager<AppUser> signInManager,
     ICheckoutService checkout,
     ICampusAccountService campusAccounts,
     IFinancialReportService reports,
     IOptions<FeeSettings> feeOptions,
-    MobileTokenService mobileTokens) : ControllerBase
+    MobileTokenService mobileTokens,
+    ILogger<MobileApiController> logger) : ControllerBase
 {
     private readonly FeeSettings _fees = feeOptions.Value;
 
@@ -85,6 +89,32 @@ public class MobileApiController(
         role == SystemRoles.Administrator;
 
     // ---------- Profile / dashboard ----------
+
+    /// <summary>
+    /// Exchanges a valid mobile bearer token for the normal Identity cookie in the app's WebView.
+    /// The token is accepted only in the Authorization header and is never placed in the URL.
+    /// </summary>
+    [HttpGet("web-session")]
+    public async Task<IActionResult> CreateWebSession([FromQuery] string? returnUrl = null)
+    {
+        Response.Headers["Cache-Control"] = "no-store";
+        Response.Headers["Pragma"] = "no-cache";
+
+        var (user, _, role) = await ResolveUserAsync();
+        if (user is null || role is null)
+            return Unauthorized(new { success = false, message = "Your mobile session is invalid or expired. Please sign in again." });
+
+        var defaultPath = role switch
+        {
+            SystemRoles.Administrator => "/adminhome/index/",
+            SystemRoles.FinancialOfficer => "/payment/dashboard/",
+            _ => "/customer/index/"
+        };
+        var target = Url.IsLocalUrl(returnUrl) ? returnUrl! : defaultPath;
+
+        await signInManager.SignInAsync(user, isPersistent: false);
+        return LocalRedirect(target);
+    }
 
     [HttpGet("profile")]
     public async Task<IActionResult> Profile()
@@ -507,31 +537,34 @@ public class MobileApiController(
         });
     }
 
-    public record RegisterVehicleRequest(
-        string RegistrationNumber,
-        string? Make,
-        string? Model,
-        string? Colour);
-
     [HttpPost("vehicles")]
-    public async Task<IActionResult> RegisterVehicle([FromBody] RegisterVehicleRequest req)
+    public async Task<IActionResult> RegisterVehicle([FromBody] VehicleRegistrationInput? req)
     {
         var (user, customer, role) = await ResolveUserAsync();
 
         if (user is null || customer is null || role != SystemRoles.Customer)
             return Unauthorized(new { success = false, message = "Customer authentication required." });
 
-        var reg = (req?.RegistrationNumber ?? "").Trim().ToUpperInvariant();
+        if (req is null || !ModelState.IsValid)
+            return BadRequest(new { success = false, message = "Check the vehicle details and field lengths." });
+
+        var reg = req.RegistrationNumber.Trim().ToUpperInvariant();
 
         if (string.IsNullOrWhiteSpace(reg))
             return BadRequest(new { success = false, message = "Registration number is required." });
 
-        await using var tx = await context.Database.BeginTransactionAsync();
+        await using var tx = await context.Database.BeginTransactionAsync(IsolationLevel.Serializable);
 
         try
         {
-            if (await context.Vehicles.AnyAsync(v => v.RegistrationNumber == reg))
+            var existingVehicle = await context.Vehicles
+                .SingleOrDefaultAsync(v => v.RegistrationNumber == reg);
+
+            if (existingVehicle is { IsActive: true })
                 return Conflict(new { success = false, message = "Vehicle registration already exists." });
+
+            if (existingVehicle is not null && existingVehicle.CustomerId != customer.Id)
+                return Conflict(new { success = false, message = "This vehicle is registered to another customer. Contact administration if ownership has changed." });
 
             var existingCount = await context.Vehicles.CountAsync(
                 v => v.CustomerId == customer.Id && v.IsActive);
@@ -540,19 +573,23 @@ public class MobileApiController(
             var fee = position == 1
                 ? _fees.FirstVehicleFee
                 : (_fees.SubsequentVehicleFee ?? 0m);
+            var reactivated = existingVehicle is not null;
 
-            var vehicle = new Vehicle
+            var vehicle = existingVehicle ?? new Vehicle
             {
                 CustomerId = customer.Id,
-                RegistrationNumber = reg,
-                Make = req!.Make?.Trim(),
-                Model = req.Model?.Trim(),
-                Colour = req.Colour?.Trim(),
-                RegisteredAtUtc = DateTime.UtcNow,
-                IsActive = true
+                RegistrationNumber = reg
             };
 
-            context.Vehicles.Add(vehicle);
+            vehicle.Make = req.Make?.Trim();
+            vehicle.Model = req.Model?.Trim();
+            vehicle.Colour = req.Colour?.Trim();
+            vehicle.RegisteredAtUtc = DateTime.UtcNow;
+            vehicle.IsActive = true;
+
+            if (!reactivated)
+                context.Vehicles.Add(vehicle);
+
             await context.SaveChangesAsync();
             await tx.CommitAsync();
 
@@ -568,18 +605,28 @@ public class MobileApiController(
                 fee,
                 currency = "ZAR",
                 paymentRequired = fee > 0,
+                reactivated,
                 message = fee > 0
-                    ? $"Vehicle #{position} registered. Applicable fee: {FormatZar(fee)}."
-                    : "Vehicle registered. Registration fee: R0,00."
+                    ? $"Vehicle #{position} {(reactivated ? "reactivated" : "registered")}. Applicable fee: {FormatZar(fee)}."
+                    : reactivated ? "Vehicle reactivated. Registration fee: R0,00." : "Vehicle registered. Registration fee: R0,00."
             });
         }
-        catch
+        catch (DbUpdateException ex)
         {
-            await tx.RollbackAsync();
+            logger.LogWarning(ex, "Mobile vehicle registration could not be saved for customer {CustomerId} and registration {RegistrationNumber}.", customer.Id, reg);
             return StatusCode(500, new
             {
                 success = false,
-                message = "Could not register vehicle."
+                message = "The vehicle could not be saved. It may have just been registered already; refresh and try again."
+            });
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected mobile vehicle registration failure for customer {CustomerId} and registration {RegistrationNumber}.", customer.Id, reg);
+            return StatusCode(500, new
+            {
+                success = false,
+                message = "Vehicle registration is temporarily unavailable. Please try again shortly."
             });
         }
     }
@@ -611,6 +658,7 @@ public class MobileApiController(
                 id = p.Id,
                 permitNumber = p.PermitNumber,
                 permitType = p.PermitType,
+                requiresAccessibleParking = p.RequiresAccessibleParking,
                 status = p.Status.ToString(),
                 fee = p.Fee,
                 vehicleRegistration = p.Vehicle?.RegistrationNumber,
@@ -621,7 +669,7 @@ public class MobileApiController(
         });
     }
 
-    public record ApplyPermitRequest(int VehicleId, string? PermitType);
+    public record ApplyPermitRequest(int VehicleId, string? PermitType, bool RequiresAccessibleParking = false);
 
     [HttpPost("permits")]
     public async Task<IActionResult> ApplyPermit([FromBody] ApplyPermitRequest req)
@@ -664,6 +712,7 @@ public class MobileApiController(
             PermitType = string.IsNullOrWhiteSpace(req.PermitType)
                 ? "Student annual"
                 : req.PermitType.Trim(),
+            RequiresAccessibleParking = req.RequiresAccessibleParking,
             IssueDate = DateTime.UtcNow.Date,
             ExpiryDate = DateTime.UtcNow.Date.AddYears(1),
             Status = ParkingPermitStatus.PendingApproval,
@@ -679,6 +728,7 @@ public class MobileApiController(
             success = true,
             permitId = permit.Id,
             permitNumber = permit.PermitNumber,
+            requiresAccessibleParking = permit.RequiresAccessibleParking,
             fee = 0m,
             amountPayable = 0m,
             currency = "ZAR",
@@ -773,7 +823,7 @@ public class MobileApiController(
         });
     }
 
-    public record AccommodationRequestBody(int AccommodationId, string? Note);
+    public record AccommodationRequestBody(int AccommodationId, string? Note, bool RequiresAccessibleRoom = false);
 
     [HttpPost("accommodations/request")]
     public async Task<IActionResult> RequestAccommodation([FromBody] AccommodationRequestBody req)
@@ -816,6 +866,7 @@ public class MobileApiController(
             AccomodationId = accommodation.Id,
             Status = AccommodationAssignmentStatus.Pending,
             CustomerNote = string.IsNullOrWhiteSpace(req.Note) ? null : req.Note.Trim(),
+            RequiresAccessibleRoom = req.RequiresAccessibleRoom,
             RequestedAtUtc = DateTime.UtcNow
         };
 
@@ -849,6 +900,7 @@ public class MobileApiController(
                 id = r.Id,
                 status = r.Status.ToString(),
                 customerNote = r.CustomerNote,
+                requiresAccessibleRoom = r.RequiresAccessibleRoom,
                 administratorNote = r.AdministratorNote,
                 decisionMessage = r.Status == AccommodationAssignmentStatus.Approved
                     ? (r.AdministratorNote ?? ResidenceApprovalMessage)
@@ -888,6 +940,7 @@ public class MobileApiController(
                 id = r.Id,
                 status = r.Status.ToString(),
                 customerNote = r.CustomerNote,
+                requiresAccessibleRoom = r.RequiresAccessibleRoom,
                 administratorNote = r.AdministratorNote,
                 decisionMessage = r.Status == AccommodationAssignmentStatus.Approved
                     ? (r.AdministratorNote ?? ResidenceApprovalMessage)
@@ -1022,6 +1075,50 @@ public class MobileApiController(
             status = request.Status.ToString(),
             administratorNote = request.AdministratorNote,
             message = reason
+        });
+    }
+
+    /// <summary>Customer cancels their own pending residence application.</summary>
+    [HttpDelete("accommodations/requests/{id:int}")]
+    public async Task<IActionResult> CancelMyAccommodationRequest(int id)
+    {
+        var (user, customer, role) = await ResolveUserAsync();
+
+        if (user is null || customer is null || role != SystemRoles.Customer)
+            return Unauthorized(new { success = false, message = "Customer authentication required." });
+
+        var request = await context.AccommodationAssignmentRequests
+            .FirstOrDefaultAsync(r => r.Id == id && r.CustomerId == customer.Id);
+
+        if (request is null)
+            return NotFound(new { success = false, message = "Request not found." });
+
+        if (request.Status != AccommodationAssignmentStatus.Pending)
+            return Conflict(new
+            {
+                success = false,
+                message = "Only pending applications can be cancelled."
+            });
+
+        request.Status = AccommodationAssignmentStatus.Cancelled;
+        request.AdministratorNote = "Cancelled by customer.";
+        request.ReviewedAtUtc = DateTime.UtcNow;
+
+        context.Notifications.Add(new Notification
+        {
+            CustomerId = customer.Id,
+            Title = "Residence application cancelled",
+            Message = "You cancelled your residence application.",
+            CreatedAtUtc = DateTime.UtcNow
+        });
+
+        await context.SaveChangesAsync();
+
+        return Ok(new
+        {
+            success = true,
+            status = request.Status.ToString(),
+            message = "Application cancelled."
         });
     }
 
@@ -1349,4 +1446,298 @@ public class MobileApiController(
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             fileName);
     }
+
+
+    // ---------- Payment review (FO / Admin) — mirrors PaymentController.Review ----------
+
+    public record PaymentReviewRequest(string Decision, string? OfficerReference);
+
+    /// <summary>
+    /// Accept or reject a pending payment. Same rules as the web FO review action.
+    /// Decision: "Accepted" or "Rejected".
+    /// </summary>
+    [HttpPost("payments/{id:int}/review")]
+    public async Task<IActionResult> ReviewPayment(int id, [FromBody] PaymentReviewRequest req)
+    {
+        var (user, _, role) = await ResolveUserAsync();
+        if (user is null || !IsStaffRole(role))
+            return Unauthorized(new { success = false, message = "Not authenticated." });
+
+        if (req is null || string.IsNullOrWhiteSpace(req.Decision))
+            return BadRequest(new { success = false, message = "Decision is required (Accepted or Rejected)." });
+
+        var decision = req.Decision.Trim();
+        if (!decision.Equals("Accepted", StringComparison.OrdinalIgnoreCase) &&
+            !decision.Equals("Rejected", StringComparison.OrdinalIgnoreCase))
+            return BadRequest(new { success = false, message = "Decision must be Accepted or Rejected." });
+
+        var officer = await context.FinancialOfficers
+            .FirstOrDefaultAsync(x => x.AppUserId == user.Id && x.IsAuthorized);
+
+        if (officer is null && role != SystemRoles.Administrator)
+            return Forbid();
+
+        var payment = await context.Payments
+            .Include(p => p.Items)
+            .FirstOrDefaultAsync(p => p.Id == id);
+
+        if (payment is null)
+            return NotFound(new { success = false, message = "Payment not found." });
+
+        if (payment.Status != PaymentStatus.Pending)
+            return BadRequest(new { success = false, message = "Only pending payments can be accepted or rejected." });
+
+        var accepted = decision.Equals("Accepted", StringComparison.OrdinalIgnoreCase);
+        payment.Status = accepted ? PaymentStatus.Accepted : PaymentStatus.Rejected;
+        if (officer is not null) payment.FinancialOfficerId = officer.Id;
+        if (!string.IsNullOrWhiteSpace(req.OfficerReference))
+            payment.OfficerReference = req.OfficerReference.Trim();
+        payment.ReviewedAtUtc = DateTime.UtcNow;
+        payment.CompletedAtUtc = DateTime.UtcNow;
+
+        if (accepted)
+        {
+            payment.FailureReason = null;
+            foreach (var item in payment.Items) item.IsPaid = true;
+
+            var exists = await context.Transactions.AnyAsync(x => x.PaymentId == payment.Id);
+            if (!exists)
+            {
+                context.Transactions.Add(new Transaction
+                {
+                    PaymentId = payment.Id,
+                    Amount = payment.Amount,
+                    Status = TransactionStatus.Completed,
+                    TransactionReference = payment.TransactionReference ?? $"AP-{payment.Id:D6}",
+                    CreatedAtUtc = DateTime.UtcNow,
+                    CompletedAtUtc = DateTime.UtcNow
+                });
+            }
+
+            context.Notifications.Add(new Notification
+            {
+                CustomerId = payment.CustomerId,
+                Title = "Payment approved",
+                Message = $"Your {payment.PaymentType} payment ({payment.TransactionReference}) has been approved successfully.",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+        else
+        {
+            payment.FailureReason = string.IsNullOrWhiteSpace(req.OfficerReference)
+                ? "Payment was not accepted by the Financial Officer."
+                : req.OfficerReference.Trim();
+            context.Notifications.Add(new Notification
+            {
+                CustomerId = payment.CustomerId,
+                Title = "Payment rejected",
+                Message = $"Your {payment.PaymentType} payment ({payment.TransactionReference}) was not accepted. Reason: {payment.FailureReason}",
+                CreatedAtUtc = DateTime.UtcNow
+            });
+        }
+
+        await context.SaveChangesAsync();
+        return Ok(new
+        {
+            success = true,
+            message = accepted ? "Payment accepted." : "Payment rejected.",
+            paymentId = payment.Id,
+            status = payment.Status.ToString()
+        });
+    }
+
+    // ---------- Announcements ----------
+
+    [HttpGet("announcements")]
+    public async Task<IActionResult> Announcements()
+    {
+        var (user, _, role) = await ResolveUserAsync();
+        if (user is null)
+            return Unauthorized(new { success = false, message = "Not authenticated." });
+
+        var query = context.Announcements.AsNoTracking()
+            .Where(a => a.IsPublished)
+            .OrderByDescending(a => a.PublishedAtUtc);
+
+        // Audience filter: All, or role-specific if set
+        var list = await query.Take(50).ToListAsync();
+        var filtered = list.Where(a =>
+            string.IsNullOrWhiteSpace(a.Audience) ||
+            a.Audience.Equals("All", StringComparison.OrdinalIgnoreCase) ||
+            (role != null && a.Audience.Contains(role, StringComparison.OrdinalIgnoreCase))).ToList();
+
+        return Ok(new
+        {
+            success = true,
+            announcements = filtered.Select(a => new
+            {
+                id = a.Id,
+                title = a.Title,
+                body = a.Body,
+                audience = a.Audience,
+                priority = a.Priority,
+                deadlineUtc = a.DeadlineUtc,
+                publishedAtUtc = a.PublishedAtUtc
+            })
+        });
+    }
+
+    // ---------- Services catalogue (from FeeSettings — same source as web ServicesHub) ----------
+
+    [HttpGet("services")]
+    [AllowAnonymous]
+    public IActionResult ServicesCatalogue()
+    {
+        return Ok(new
+        {
+            success = true,
+            currency = "ZAR",
+            services = new object[]
+            {
+                new { key = "Electricity", name = "Electricity", unit = "kWh", pricePerUnit = _fees.ElectricityPricePerKwh ?? 0m, maxUnits = _fees.MaxElectricityUnits },
+                new { key = "Water", name = "Water", unit = "kL", pricePerUnit = _fees.WaterPricePerKl ?? 0m, maxUnits = _fees.MaxWaterUnits },
+                new { key = "Refuse", name = "Refuse", unit = "month", pricePerUnit = 0m, maxUnits = 1 },
+                new { key = "Rent", name = "Rent", unit = "month", pricePerUnit = 0m, maxUnits = 1 },
+                new { key = "Parking", name = "Parking permit", unit = "application", pricePerUnit = _fees.ParkingPermitApplicationFee, maxUnits = 1 },
+                new { key = "Vehicle", name = "Additional vehicle fee", unit = "vehicle", pricePerUnit = _fees.SubsequentVehicleFee ?? 0m, maxUnits = 10 }
+            },
+            fees = new
+            {
+                electricityPricePerKwh = _fees.ElectricityPricePerKwh,
+                waterPricePerKl = _fees.WaterPricePerKl,
+                firstVehicleFee = _fees.FirstVehicleFee,
+                subsequentVehicleFee = _fees.SubsequentVehicleFee,
+                parkingPermitApplicationFee = _fees.ParkingPermitApplicationFee
+            }
+        });
+    }
+
+    // ---------- Admin: customer list (read-only for mobile) ----------
+
+    [HttpGet("admin/customers")]
+    public async Task<IActionResult> AdminCustomers()
+    {
+        var (user, _, role) = await ResolveUserAsync();
+        if (user is null || role != SystemRoles.Administrator)
+            return Unauthorized(new { success = false, message = "Administrator authentication required." });
+
+        var customers = await context.Customers
+            .Include(c => c.AppUser)
+            .AsNoTracking()
+            .OrderBy(c => c.AppUser!.LastName)
+            .Take(200)
+            .ToListAsync();
+
+        return Ok(new
+        {
+            success = true,
+            customers = customers.Select(c => new
+            {
+                id = c.Id,
+                userNumber = c.UserNumber,
+                category = c.Category.ToString(),
+                name = c.AppUser is null ? null : $"{c.AppUser.FirstName} {c.AppUser.LastName}",
+                email = c.AppUser?.Email,
+                isActive = c.AppUser?.IsActive ?? false
+            })
+        });
+    }
+
+    // ---------- Admin aliases used by Android ----------
+
+    [HttpGet("admin/assignment-requests")]
+    public Task<IActionResult> AdminAssignmentRequestsAlias() => AllAccommodationRequests();
+
+    [HttpPost("admin/assignment-requests/{id:int}/review")]
+    public async Task<IActionResult> AdminReviewAssignment(int id, [FromBody] ReviewAssignmentBody body)
+    {
+        if (body == null || string.IsNullOrWhiteSpace(body.Status))
+            return BadRequest(new { success = false, message = "Status is required." });
+
+        var status = body.Status.Trim();
+        if (status.Equals("Approved", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("Accepted", StringComparison.OrdinalIgnoreCase))
+        {
+            return await ApproveAccommodationRequest(id);
+        }
+
+        if (status.Equals("Rejected", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase))
+        {
+            return await RejectAccommodationRequest(id, new RejectAccommodationRequestBody(
+                body.AdministratorNote ?? "Rejected by administrator.",
+                status.Equals("Cancelled", StringComparison.OrdinalIgnoreCase)));
+        }
+
+        return BadRequest(new { success = false, message = "Status must be Approved or Rejected." });
+    }
+
+    [HttpGet("admin/payments/audit")]
+    public async Task<IActionResult> AdminPaymentsAudit()
+    {
+        var (user, _, role) = await ResolveUserAsync();
+        if (user is null || (!IsAdminRole(role) && role != SystemRoles.FinancialOfficer))
+            return Forbid();
+
+        var list = await context.Payments
+            .Include(p => p.Customer!).ThenInclude(c => c.AppUser)
+            .OrderByDescending(p => p.SubmittedAtUtc)
+            .Take(300)
+            .AsNoTracking()
+            .Select(p => new
+            {
+                id = p.Id,
+                transactionReference = p.TransactionReference,
+                amount = p.Amount,
+                status = p.Status.ToString(),
+                paymentType = p.PaymentType.ToString(),
+                paymentMethod = p.PaymentMethod,
+                submittedAtUtc = p.SubmittedAtUtc,
+                reviewedAtUtc = p.ReviewedAtUtc,
+                customerName = p.Customer != null && p.Customer.AppUser != null
+                    ? (p.Customer.AppUser.FirstName + " " + p.Customer.AppUser.LastName).Trim()
+                    : null,
+                userNumber = p.Customer != null ? p.Customer.UserNumber : null,
+                failureReason = p.FailureReason,
+                officerReference = p.OfficerReference
+            })
+            .ToListAsync();
+
+        return Ok(new { success = true, payments = list, items = list, data = list });
+    }
+
+    [HttpGet("admin/accommodations")]
+    public async Task<IActionResult> AdminListAccommodations()
+    {
+        var (user, _, role) = await ResolveUserAsync();
+        if (user is null || !IsAdminRole(role))
+            return Forbid();
+
+        var list = await context.Accomodations
+            .OrderBy(a => a.Name)
+            .AsNoTracking()
+            .Select(a => new
+            {
+                id = a.Id,
+                name = a.Name,
+                unitNumber = a.UnitNumber,
+                type = a.AccommodationType.ToString(),
+                roomType = a.RoomType != null ? a.RoomType.ToString() : null,
+                capacity = a.Capacity,
+                monthlyRent = a.MonthlyRent,
+                address = a.Address,
+                isActive = a.IsActive,
+                description = a.Description
+            })
+            .ToListAsync();
+
+        return Ok(new { success = true, accommodations = list, items = list });
+    }
+
+    public sealed class ReviewAssignmentBody
+    {
+        public string Status { get; set; } = "";
+        public string? AdministratorNote { get; set; }
+    }
+
 }

@@ -42,7 +42,12 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddScoped<IRepositoryWrapper, RepositoryWrapper>();
 builder.Services.Configure<NotificationSettings>(
     builder.Configuration.GetSection("NotificationSettings"));
+builder.Services.Configure<OneSignalSettings>(
+    builder.Configuration.GetSection("OneSignal"));
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddHttpClient<IOneSignalPushService, OneSignalPushService>(client =>
+    client.Timeout = TimeSpan.FromSeconds(8));
+builder.Services.AddScoped<IEmailDeliveryService, EmailDeliveryService>();
 builder.Services.AddScoped<ITransactionService, TransactionService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IPaymentGateway, InternalPaymentProcessor>();
@@ -107,44 +112,42 @@ var localization = new RequestLocalizationOptions
 app.UseRequestLocalization(localization);
 
 // Apply migrations + seed roles/admin (safe if DB is not ready yet)
+// Apply SQLite migrations and seed the administrator
 using (var scope = app.Services.CreateScope())
 {
     var logger = scope.ServiceProvider
         .GetRequiredService<ILoggerFactory>()
         .CreateLogger("Startup");
+
     try
     {
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var db = scope.ServiceProvider
+            .GetRequiredService<AppDbContext>();
+
         await db.Database.MigrateAsync();
-        // Smallest additive schema change for Property → Unit → Corridor → Room.
-        // Existing rows are preserved; new columns are nullable.
-        await db.Database.ExecuteSqlRawAsync("""
-            IF COL_LENGTH('Accomodations', 'Corridor') IS NULL
-                ALTER TABLE Accomodations ADD Corridor nvarchar(80) NULL;
-            IF COL_LENGTH('Accomodations', 'RoomNumber') IS NULL
-                ALTER TABLE Accomodations ADD RoomNumber nvarchar(40) NULL;
-            IF COL_LENGTH('dbo.Accomodations', 'MonthlyRent') IS NULL
-                ALTER TABLE dbo.Accomodations ADD MonthlyRent decimal(18,2) NULL;
-            IF COL_LENGTH('dbo.Accomodations', 'RoomType') IS NULL
-                ALTER TABLE dbo.Accomodations ADD RoomType int NULL;
-            """);
+
+        logger.LogInformation(
+            "SQLite database migrations completed successfully.");
     }
     catch (Exception ex)
     {
-        logger.LogWarning(ex, "Database migrate was skipped. Check connection string and migrations.");
+        logger.LogError(
+            ex,
+            "SQLite database migration failed.");
     }
+
     try
     {
-        await AdministratorAccountSeeder.SeedAsync(scope.ServiceProvider);
+        await AdministratorAccountSeeder.SeedAsync(
+            scope.ServiceProvider);
     }
     catch (Exception ex)
     {
         logger.LogWarning(
             ex,
-            "Database seeding was skipped. Create ArnoxPayDB and apply migrations, then restart.");
+            "Administrator seeding failed.");
     }
 }
-
 // Pipeline
 if (app.Environment.IsDevelopment())
 {

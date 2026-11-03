@@ -51,10 +51,16 @@
 					{
 						<div class="alert alert-warning">Your residence request is awaiting administrator review.</div>
 					}
-					else if(!full && User.IsInRole(SystemRoles.Customer))
-					{
-						<form asp-action="RequestAssignment" method="post"><input name="AccomodationId" value="@Model.Accomodation.Id" type="hidden"/>
-						<label class="form-label" for="CustomerNote">Optional note to administrator</label>
+		else if(!full && User.IsInRole(SystemRoles.Customer))
+		{
+			<form asp-action="RequestAssignment" method="post"><input name="AccomodationId" value="@Model.Accomodation.Id" type="hidden"/>
+			<fieldset class="mb-3">
+				<legend class="form-label h6">Do you require an accessible room?</legend>
+				<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="RequiresAccessibleRoom" id="accessibleRoomYes" value="true"/><label class="form-check-label" for="accessibleRoomYes">Yes</label></div>
+				<div class="form-check form-check-inline"><input class="form-check-input" type="radio" name="RequiresAccessibleRoom" id="accessibleRoomNo" value="false" checked/><label class="form-check-label" for="accessibleRoomNo">No</label></div>
+				<div class="form-text">Choose Yes if you need room features for disability-related access. This request helps the accommodation team consider a suitable room; no diagnosis details are needed.</div>
+			</fieldset>
+			<label class="form-label" for="CustomerNote">Optional note to administrator</label>
 						<textarea class="form-control mb-3" name="CustomerNote" id="CustomerNote" rows="3">
 
 						</textarea>

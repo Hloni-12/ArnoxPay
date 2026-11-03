@@ -15,6 +15,7 @@ public class ParkingPermit
     [StringLength(40)]
     public string PermitType { get; set; }
     = "Student annual";
+    public bool RequiresAccessibleParking { get; set; }
     public DateTime IssueDate { get; set; }
     public DateTime ExpiryDate { get; set; }
     public ParkingPermitStatus Status { get; set; }

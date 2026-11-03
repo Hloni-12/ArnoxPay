@@ -16,9 +16,10 @@
 			<table class="table table-hover mb-0">
 				<thead>
 					<tr>
-						<th>Accomodation</th>
-						<th>Requested</th>
-						<th>Status</th>
+							<th>Accomodation</th>
+							<th>Requested</th>
+							<th>Accessibility</th>
+							<th>Status</th>
 						<th>Administrator note</th>
 					</tr>
 				</thead>
@@ -26,8 +27,9 @@
 						{
 							<tr>
 								<td>@request.Accomodation?.Name <small class="text-muted d-block">Unit @request.Accomodation?.UnitNumber</small></td>
-								<td>@request.RequestedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
-								<td><partial name="_StatusBadge" model="@request.Status.ToString()"/></td>
+									<td>@request.RequestedAtUtc.ToLocalTime().ToString("dd MMM yyyy")</td>
+									<td>@(request.RequiresAccessibleRoom ? "Accessible room requested" : "No accessibility request")</td>
+									<td><partial name="_StatusBadge" model="@request.Status.ToString()"/></td>
 								<td>@request.AdministratorNote</td>
 							</tr>
 						}
@@ -39,5 +41,4 @@
 		{
 			<div class="empty-state">You have not submitted a residence request.</div>
 		}
-	}
 </section>
